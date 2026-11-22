@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
   const profile = S.store.get();
-  let lang = profile.lang === "ur" ? "ur" : "en";
+  let lang = ["ur", "ro"].includes(profile.lang) ? profile.lang : "en";
   let edition = null;
   try { edition = await S.api.edition(); } catch (e) { /* page still works without stories */ }
 
@@ -24,6 +24,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       gift: "کسی پیارے کے لیے بنائیں", seeYou: "سات بجے ملتے ہیں۔", home: "پہلے صفحے پر واپس",
       stats: (ed) => [[S.pickedStories(ed).length, "خبریں آج کے اخبار میں"], [ed.stats.outlets_read, "ادارے رات بھر پڑھے گئے"], [0, "فیڈ اسکرول کرنے کو"]],
       sources: (n) => `ذرائع (${S.toUrduDigits(n)})`, none: "یہاں تین بڑی خبریں دیکھنے کے لیے پہلے اخبار بنائیں۔"
+    },
+    ro: {
+      back: "Aaj ke akhbaar par wapas", lede: "Aaj ke liye bas. Aage kuch intezar nahin kar raha.",
+      rememberTitle: "Aaj ki teen bari khabrein, ek baar phir", nextTitle: "Aap ka agla akhbaar chhapne mein",
+      nextNote: "Kal subah saat baje, Lahore ke waqt ke mutabiq. Tab tak khabrein intezar kar sakti hain.", close: "Akhbaar band karein",
+      gift: "Kisi pyare ke liye banayein", seeYou: "Saat baje milte hain.", home: "Pehle safhe par wapas",
+      stats: (ed) => [[S.pickedStories(ed).length, "khabrein aaj ke akhbaar mein"], [ed.stats.outlets_read, "idare raat bhar parhe gaye"], [0, "feeds scroll karne ko"]],
+      sources: (n) => `Zaraye (${n})`, none: "Yahan teen bari khabrein dekhne ke liye pehle akhbaar banayein."
     }
   };
   const num = (n) => (lang === "ur" ? S.toUrduDigits(n) : String(n));
@@ -36,8 +44,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     list.innerHTML = mine.slice(0, 3).map((st, i) => {
       const head = S.headlineOf(st, lang);
       const headUr = /[؀-ۿ]/.test(head);
-      return `<li class="is-flip top3" style="--i:${i}"${lang === "ur" ? ' lang="ur" dir="rtl"' : ""}>
-        <p class="top3__head"${headUr ? ' lang="ur" dir="rtl"' : ""}>${S.esc(head)}</p>
+      const headEn = lang === "ro" && !headUr && !(st.summary && st.summary.ro);
+      return `<li class="is-flip top3" style="--i:${i}"${lang === "ur" ? ' lang="ur" dir="rtl"' : lang === "ro" ? ' lang="ur-Latn"' : ""}>
+        <p class="top3__head"${headUr ? ' lang="ur" dir="rtl"' : headEn ? ' lang="en"' : ""}>${S.esc(head)}</p>
         ${S.coverageHTML(st, lang, { dots: false })}
         <details class="top3__src"><summary>${L.sources(st.sources.length)}</summary><ul>${st.sources.map((s) =>
           `<li><b>${S.esc(s.outlet)}</b> <a href="${S.esc(s.link)}" target="_blank" rel="noopener noreferrer"${s.lang === "ur" ? ' lang="ur" dir="rtl"' : ""}>${S.esc(s.title)}</a></li>`).join("")}</ul></details>
@@ -58,6 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       el.textContent = L[k];
       el.classList.toggle("is-ur", lang === "ur");
       if (lang === "ur") { el.setAttribute("lang", "ur"); el.setAttribute("dir", "rtl"); }
+      else if (lang === "ro") { el.setAttribute("lang", "ur-Latn"); el.removeAttribute("dir"); }
       else { el.removeAttribute("lang"); el.removeAttribute("dir"); }
     });
     $$("#end-lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));

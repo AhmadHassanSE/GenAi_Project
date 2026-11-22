@@ -57,10 +57,12 @@ def for_recipient(edition: dict, city: str | None, topics: list[str], limit: int
 
 
 def story_text(st: dict, lang: str) -> dict:
-    """Headline and body for one story: the checked summary, else the outlet's own words, credited."""
+    """Headline and body for one story: the checked summary, else the outlet's own words, credited.
+    A Roman Urdu reader gets the English summary for a story the AI wrote no Roman Urdu for."""
     if st.get("summary"):
-        s = st["summary"][lang]
-        return {"headline": s["headline"], "text": s["text"], "credit": None, "lang": lang}
+        got = lang if st["summary"].get(lang) else "en"
+        s = st["summary"][got]
+        return {"headline": s["headline"], "text": s["text"], "credit": None, "lang": got}
     b = (st.get("brief") or {})
     own = b.get(lang) or b.get("en") or b.get("ur")
     head = st["headline"].get(lang) or st["headline"]["en"]
@@ -87,15 +89,33 @@ L = {
                       "جمع کی گئی ہے اور ہر رپورٹ کا لنک ساتھ ہے۔ خلاصے صرف انہی رپورٹس سے لکھے جاتے ہیں۔"),
            "reply": "یہ ای میلز بند کرنے کے لیے اس پیغام کا جواب دیں، {f} کو بتا دیا جائے گا۔",
            "title": "{n} کی صبح", "large": "بڑے حروف", "note": "{f} کی طرف سے پیغام"},
+    "ro": {"gift": "Tohfa", "love": "Mohabbat ke saath, {f}", "for_you": "Aap ke liye", "sources": "Reports parhein",
+           "own": "{o} ke apne alfaaz mein, us ki report se.", "read_more": "Aaj ka akhbaar Subah par kholein",
+           "footer": ("{f} ne yeh akhbaar aap ke liye Subah par banaya hai. Har khabar hamari shaya shuda fehrist ke "
+                      "idaron ki reports se jama ki gayi hai aur har report ka link saath hai. Khulase sirf inhi "
+                      "reports se likhe jate hain."),
+           "reply": "Yeh emails band karne ke liye is paigham ka jawab dein, {f} ko bata diya jayega.",
+           "title": "{n} ki Subah", "large": "Bare huroof", "note": "{f} ki taraf se paigham"},
 }
+
+
+def coverage(st: dict, lang: str) -> str:
+    """The coverage label in the reading language; editions made before Roman Urdu have no "ro" label."""
+    cov = st.get("coverage") or {}
+    if cov.get(lang):
+        return cov[lang]
+    if lang == "ro":
+        n = st["outlet_count"]
+        return f"{n} {'idare' if n == 1 else 'idaron'} ne report kiya"
+    return cov.get("en", "")
 
 
 def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     """Returns (subject, html, text) for one gift paper."""
-    lang = "ur" if gift.get("lang") == "ur" else "en"
+    lang = gift.get("lang") if gift.get("lang") in ("ur", "ro") else "en"
     t = L[lang]
     ur_ok = lang == "ur"
-    name = (ur_ok and gift.get("recipient_name_ur")) or gift["recipient_name"] or ("آپ" if ur_ok else "Your")
+    name = (ur_ok and gift.get("recipient_name_ur")) or gift["recipient_name"] or ("آپ" if ur_ok else "Aap" if lang == "ro" else "Your")
     sender = (ur_ok and gift.get("from_name_ur")) or gift["from_name"]
     big = bool(gift.get("large"))
     base = 20 if big else 16
@@ -103,7 +123,7 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     lh = 2.1 if lang == "ur" else 1.55
     dir_ = "rtl" if lang == "ur" else "ltr"
     align = "right" if lang == "ur" else "left"
-    title = t["title"].format(n=name) if (lang == "ur" or gift["recipient_name"]) else "Your Subah"
+    title = t["title"].format(n=name) if (lang != "en" or gift["recipient_name"]) else "Your Subah"
     date = today(lang)
     picks = for_recipient(edition, gift.get("city"), gift.get("topics") or [], limit=gift.get("stories", 5))
 
@@ -119,7 +139,7 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     for i, p in enumerate(picks, 1):
         st, tags = p["story"], p["tags"]
         s = story_text(st, lang)
-        cov = st["coverage"][lang]
+        cov = coverage(st, lang)
         chips = "".join(
             f'<span style="display:inline-block;margin:0 0 4px 6px;padding:2px 10px;border-radius:99px;'
             f'background:#fbecd6;color:#7a3b10;font-size:{base - 3}px">{escape(tg["ur"] if lang == "ur" else tg["en"])}</span>'

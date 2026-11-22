@@ -143,6 +143,20 @@ def test_email_is_built_from_checked_text_with_links(client, collection):
     assert scores == sorted(scores, reverse=True)
 
 
+def test_roman_urdu_gift_email(collection):
+    ed = build_edition({}, collection=collection, cache_path=None, pool=12)
+    st = ed["stories"][0]
+    st["summary"] = {"en": {"headline": "English head", "text": "English text."},
+                     "ur": {"headline": "اردو سرخی", "text": "اردو متن۔"},
+                     "ro": {"headline": "Roman sarkhi", "text": "Roman matn."}}
+    for other in ed["stories"][1:]:
+        other["coverage"].pop("ro", None)  # an edition made before Roman Urdu existed
+    subject, html, text = mailer.render_gift(ed, dict(GIFT, lang="ro", city=None, topics=[]))
+    assert "ki Subah" in subject and "Mohabbat ke saath" in subject
+    assert "Roman sarkhi" in html and "English head" not in html
+    assert "ne report kiya" in html
+
+
 def test_preview_needs_no_account(client):
     r = client.post("/api/gift/preview", json=GIFT)
     assert r.status_code == 200 and "<html" in r.json()["html"]

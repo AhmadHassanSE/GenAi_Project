@@ -98,7 +98,7 @@ The first start takes a few minutes (it installs packages and downloads the 1.1 
 - **Data sources:** the app can run on live feeds, a saved snapshot or the bundled synthetic fixtures (`SUBAH_SOURCE`).
 - Grouping was tuned on one real day of feeds and a fixed test set; ongoing stories can collect several related developments into one group.
 - AI summaries use Groq (`openai/gpt-oss-120b`) on the free tier. On a real day 9 of 10 stories passed the source check in 2 calls; the free tier has per-minute token limits, so very fast repeated generations may fall back to headlines until the minute resets.
-- Urdu and Roman Urdu AI output still needs review by an Urdu speaker. A story the AI wrote no Roman Urdu for is shown in English, with a note. Gift emails and the last page are in English or Urdu only.
+- Urdu and Roman Urdu AI output still needs review by an Urdu speaker. A story the AI wrote no Roman Urdu for is shown in English, with a note.
 - Payments are a prototype: choosing a plan activates it without charging. A payment provider (for example Stripe) is needed before launch.
 - Gift emails go out from one Gmail account, which Google limits to about 500 messages a day.
 - Scope note: the first MVP left out payments; plans and gift emails were added later.

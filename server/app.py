@@ -223,7 +223,7 @@ class GiftRequest(BaseModel):
     recipient_email: str = Field(..., max_length=254)
     city: str | None = None
     topics: list[str] = Field(default_factory=list, max_length=5)
-    lang: Literal["en", "ur"] = "ur"
+    lang: Literal["en", "ur", "ro"] = "ur"
     large: bool = True
     from_name: str = Field("", max_length=24)
     note: str = Field("", max_length=280)

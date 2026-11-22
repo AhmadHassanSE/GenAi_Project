@@ -59,7 +59,7 @@ cp .env.example .env        # then add your API key if you have one
 
 ### Environment variables
 
-`GROQ_API_KEY` (optional: without it, stories show source headlines with links; get one at console.groq.com), `SUBAH_SOURCE` (`live`, `snapshot` or `fixtures`), `SUBAH_AI_BATCH`, `SUBAH_MAX_AI_CALLS`, `SUBAH_MODEL`, `SUBAH_AI`, `MONGODB_URI` and `SUBAH_DB` (accounts; without them accounts live in memory), `GMAIL_USER` and `GMAIL_APP_PASSWORD` (gift emails; a Google app password, not the account password), `SUBAH_SITE_URL`. See `.env.example`.
+`GROQ_API_KEY` (optional: without it, stories show source headlines with links; get one at console.groq.com), `SUBAH_SOURCE` (`live`, `snapshot` or `fixtures`), `SUBAH_AI_BATCH`, `SUBAH_MAX_AI_CALLS`, `SUBAH_MODEL`, `SUBAH_AI`, `MONGODB_URI` and `SUBAH_DB` (accounts; without them accounts live in memory), `GMAIL_USER` and `GMAIL_APP_PASSWORD` (gift emails; a Google app password, not the account password), `SUBAH_SITE_URL`, `SUBAH_SCHEDULE`, `SUBAH_PRINT_AT`, `SUBAH_SEND_AT` (morning run). See `.env.example`.
 
 ### Run
 
@@ -81,7 +81,7 @@ Useful tools: `python -m server.tools.check_feeds` checks every feed; `python -m
 bash scripts/test.sh
 ```
 
-85 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
+91 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
 
 ## Deploy (free, Hugging Face Spaces)
 
@@ -104,7 +104,8 @@ The first start takes a few minutes (it installs packages and downloads the 1.1 
 - AI summaries use Groq (`openai/gpt-oss-120b`) on the free tier. On a real day 9 of 10 stories passed the source check in 2 calls; the free tier has per-minute token limits, so very fast repeated generations may fall back to headlines until the minute resets.
 - Urdu and Roman Urdu AI output still needs review by an Urdu speaker. A story the AI wrote no Roman Urdu for is shown in English, with a note.
 - Payments are a prototype: choosing a plan activates it without charging. A payment provider (for example Stripe) is needed before launch.
-- Gift emails go out from one Gmail account, which Google limits to about 500 messages a day.
+- Gift emails and morning emails go out from one Gmail account, which Google limits to about 500 messages a day; the morning run stops at 400.
+- The morning run lives inside the web server: a free Hugging Face Space that has gone to sleep prints and sends nothing until someone opens it (it catches up until 11:00).
 - Scope note: the first MVP left out payments; plans and gift emails were added later.
 
 ## Proposal vs. build
@@ -122,7 +123,7 @@ How each item in the project proposal ended up. "Changed in MVP scope" means we 
 | Factuality check (second LLM pass or entailment model) | Built as a deterministic code check on numbers and names, with one retry | `grounding.py` |
 | "For you" line and fuel-price table | Rule-based "For you" tags showing the matched word; no price table (scope decision: no AI predictions about a reader's costs) | `tags.py` |
 | English, Urdu and Roman Urdu; large print | Built | Paper page language switch |
-| Delivery by web, and WhatsApp or email at 7 am | Web, plus gift papers by email; no scheduled daily send or WhatsApp yet | `mailer.py` |
+| Delivery by web, and WhatsApp or email at 7 am | Built for email: the paper is printed at 06:30 and emailed at 07:00 (Lahore time) to readers who turn on "Email me my paper" on their account; gift papers by email. No WhatsApp yet | `scheduler.py`, `mailer.py`, `/account.html` |
 | "You're done for today" | Built | `/end.html` |
 | Phase 2: audio | Built with the browser's own voices | Paper page, Listen |
 | Phase 2: gift papers | Built: $3 and $8 plans (prototype checkout, no payment) and gift email | `/pricing.html`, `/gift.html` |

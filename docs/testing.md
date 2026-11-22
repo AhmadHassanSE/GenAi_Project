@@ -26,8 +26,9 @@ or, with the virtual environment active, `python -m pytest server/tests -q`. The
 | End-to-end / manual added later (browser): pricing, sign up, checkout, account page, gift preview, send without Gmail, phone width | 3 pages | 3 | 0 |
 | Unit / integration added later: Roman Urdu and topic balance (`test_summaries.py`, `test_api.py`, `test_foryou.py`) | 10 | 10 | 0 |
 | Unit / integration added later: Roman Urdu email, settings on the account, feed cap, evaluation sheets, request sizing, Roman Urdu that is English or fails the check (`test_accounts.py`, `test_feeds.py`, `test_evaluate.py`, `test_summaries.py`) | 9 | 9 | 0 |
+| Unit / integration added later: morning print and email, opt-in switch (`test_morning.py`) | 6 | 6 | 0 |
 
-Total automated tests now: 85, all passing.
+Total automated tests now: 91, all passing.
 
 ## Edge cases covered
 
@@ -65,6 +66,10 @@ Total automated tests now: 85, all passing.
 | EC-30 | Six cricket stories outscore everything else | Only 3 make the paper; order still by score | `test_one_section_cannot_fill_the_paper` | Pass |
 | EC-31 | Too few other stories to fill the paper | Held-back stories return, still by score | `test_held_back_stories_fill_the_paper_when_there_is_nothing_else` | Pass |
 | EC-32 | Unknown language code | HTTP 422 | `test_roman_urdu_profile_is_accepted` | Pass |
+| EC-33 | Server restarts after the morning emails went out | No second email that day | `test_a_restart_does_not_send_twice` | Pass |
+| EC-34 | Server wakes at 09:15, or at 13:00 | Catches up and sends; after 11:00 skips the day | `test_late_start_catches_up_then_gives_up` | Pass |
+| EC-35 | Gmail not set up at 07:00 | Nothing sent; the reason is recorded | `test_without_gmail_nothing_is_sent_and_it_says_why` | Pass |
+| EC-36 | Feeds fail at 06:30 | Waits 10 minutes, then tries again | `test_a_failed_print_waits_before_trying_again` | Pass |
 
 ## Measured metrics
 

@@ -40,6 +40,7 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | FR-22 | Save the reader's settings to their account and restore them on another device | Should | Done: saved on every change while logged in; restored on log-in or on a new device |
 | FR-23 | Roman Urdu as a third reading language: AI-written, grounding-checked Roman Urdu headline and summary per story; English shown, and labelled, for any story without one | Should | Done (added after the first MVP): paper, setup page, last page, gift page and gift email |
 | FR-24 | Topic balance: no section (a story's first topic) fills more than 30% of the paper, rounded up (3 of 10); held-back stories return only if the paper would otherwise be short | Should | Done (added after the first MVP) |
+| FR-25 | The paper is printed every morning (06:30 Lahore time) and emailed at 07:00 to readers who turn on "Email me my paper" on their account, ranked for their saved settings, in their language and print size; never twice a day | Should | Done (added after the first MVP); needs the server awake and Gmail set up |
 
 ## Non-functional requirements
 

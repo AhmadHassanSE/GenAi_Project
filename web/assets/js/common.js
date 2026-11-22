@@ -133,6 +133,7 @@
     async subscribe(plan) { const r = await api.post("/api/subscribe", { plan }); setMe(r.user); return r.user; },
     async cancelPlan() { const r = await api.post("/api/subscribe/cancel"); setMe(r.user); return r.user; },
     giftPreview(gift) { return api.post("/api/gift/preview", gift); },
+    async setDaily(on) { const r = await api.post("/api/daily", { on }); setMe(r.user); return r.user; },
     async giftSend(gift) { const r = await api.post("/api/gift/send", gift); setMe(r.user); return r; }
   };
   /* ---------------------------------------------------------------- settings kept with the account (FR-22)

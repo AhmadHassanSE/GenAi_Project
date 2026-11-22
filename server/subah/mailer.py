@@ -82,20 +82,33 @@ L = {
            "footer": ("{f} set up this paper for you on Subah. Every story is grouped from reports by the outlets on "
                       "our published list, and links to each one. Summaries are written only from those reports."),
            "reply": "To stop these emails, reply to this message and {f} will be told.",
-           "title": "{n}'s Subah", "large": "Large print", "note": "A note from {f}"},
+           "title": "{n}'s Subah", "large": "Large print", "note": "A note from {f}",
+           "daily": "Your morning paper", "daily_line": "Ten minutes of news, then you are done.",
+           "daily_footer": ("You asked Subah to email you this paper every morning. Every story is grouped from reports "
+                            "by the outlets on our published list, and links to each one. Summaries are written only "
+                            "from those reports."),
+           "daily_reply": "To stop these emails, turn off \"Email me my paper\" on your account page."},
     "ur": {"gift": "تحفہ", "love": "محبت کے ساتھ، {f}", "for_you": "آپ کے لیے", "sources": "رپورٹس پڑھیں",
            "own": "{o} کے اپنے الفاظ میں، اس کی رپورٹ سے۔", "read_more": "آج کا اخبار صبح پر کھولیں",
            "footer": ("{f} نے یہ اخبار آپ کے لیے صبح پر بنایا ہے۔ ہر خبر ہماری شائع شدہ فہرست کے اداروں کی رپورٹس سے "
                       "جمع کی گئی ہے اور ہر رپورٹ کا لنک ساتھ ہے۔ خلاصے صرف انہی رپورٹس سے لکھے جاتے ہیں۔"),
            "reply": "یہ ای میلز بند کرنے کے لیے اس پیغام کا جواب دیں، {f} کو بتا دیا جائے گا۔",
-           "title": "{n} کی صبح", "large": "بڑے حروف", "note": "{f} کی طرف سے پیغام"},
+           "title": "{n} کی صبح", "large": "بڑے حروف", "note": "{f} کی طرف سے پیغام",
+           "daily": "آپ کا صبح کا اخبار", "daily_line": "چند منٹ کی خبریں، پھر بس۔",
+           "daily_footer": ("آپ نے صبح سے کہا تھا کہ یہ اخبار ہر صبح ای میل کیا جائے۔ ہر خبر ہماری شائع شدہ فہرست کے "
+                            "اداروں کی رپورٹس سے جمع کی گئی ہے اور ہر رپورٹ کا لنک ساتھ ہے۔ خلاصے صرف انہی رپورٹس سے لکھے جاتے ہیں۔"),
+           "daily_reply": "یہ ای میلز بند کرنے کے لیے اپنے اکاؤنٹ کے صفحے پر \"میرا اخبار ای میل کریں\" بند کریں۔"},
     "ro": {"gift": "Tohfa", "love": "Mohabbat ke saath, {f}", "for_you": "Aap ke liye", "sources": "Reports parhein",
            "own": "{o} ke apne alfaaz mein, us ki report se.", "read_more": "Aaj ka akhbaar Subah par kholein",
            "footer": ("{f} ne yeh akhbaar aap ke liye Subah par banaya hai. Har khabar hamari shaya shuda fehrist ke "
                       "idaron ki reports se jama ki gayi hai aur har report ka link saath hai. Khulase sirf inhi "
                       "reports se likhe jate hain."),
            "reply": "Yeh emails band karne ke liye is paigham ka jawab dein, {f} ko bata diya jayega.",
-           "title": "{n} ki Subah", "large": "Bare huroof", "note": "{f} ki taraf se paigham"},
+           "title": "{n} ki Subah", "large": "Bare huroof", "note": "{f} ki taraf se paigham",
+           "daily": "Aap ka subah ka akhbaar", "daily_line": "Chand minute ki khabrein, phir bas.",
+           "daily_footer": ("Aap ne Subah se kaha tha ke yeh akhbaar har subah email kiya jaye. Har khabar hamari shaya "
+                            "shuda fehrist ke idaron ki reports se jama ki gayi hai aur har report ka link saath hai."),
+           "daily_reply": "Yeh emails band karne ke liye apne account ke safhe par \"Email me my paper\" band karein."},
 }
 
 
@@ -110,8 +123,17 @@ def coverage(st: dict, lang: str) -> str:
     return cov.get("en", "")
 
 
-def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
-    """Returns (subject, html, text) for one gift paper."""
+def render_daily(edition: dict, user: dict) -> tuple[str, str, str]:
+    """The reader's own morning paper by email: their saved city, topics, language and print size."""
+    p = user.get("profile") or {}
+    name = (p.get("name") or (user.get("name") or "").split(" ")[0]).strip()[:24]
+    return render_gift(edition, {"recipient_name": name, "city": p.get("city"), "topics": p.get("topics") or [],
+                                 "lang": p.get("lang") or "en", "large": bool(p.get("large")), "from_name": "Subah",
+                                 "note": "", "stories": 10}, daily=True)
+
+
+def render_gift(edition: dict, gift: dict, daily: bool = False) -> tuple[str, str, str]:
+    """Returns (subject, html, text) for one gift paper, or with daily=True the reader's own morning paper."""
     lang = gift.get("lang") if gift.get("lang") in ("ur", "ro") else "en"
     t = L[lang]
     ur_ok = lang == "ur"
@@ -134,6 +156,10 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
             return escape(text)
         return (f'<span dir="{"rtl" if ur else "ltr"}" lang="{"ur" if ur else "en"}" '
                 f'style="font-family:{URDU_FONT if ur else READ_FONT}">{escape(text)}</span>')
+
+    if daily:  # the reader's own paper: no sender, a different header line and footer
+        t = dict(t, gift=t["daily"], love="{f}", footer=t["daily_footer"], reply=t["daily_reply"])
+        sender = t["daily_line"]
 
     stories_html, stories_txt = [], []
     for i, p in enumerate(picks, 1):
@@ -193,7 +219,7 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     text = (f"{title}\n{t['love'].format(f=sender)}\n{date}\n\n" + (f"{note}\n\n" if note else "")
             + "\n\n".join(stories_txt) + f"\n\n{SITE_URL}/paper.html\n\n{t['footer'].format(f=sender)}\n")
     sep = "، " if lang == "ur" else ", "
-    subject = f"{title}{sep}{date}: {t['love'].format(f=sender)}"
+    subject = f"{title}{sep}{date}" if daily else f"{title}{sep}{date}: {t['love'].format(f=sender)}"
     return subject, html, text
 
 

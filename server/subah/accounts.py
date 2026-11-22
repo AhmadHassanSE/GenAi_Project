@@ -138,6 +138,9 @@ class MemoryStore:
     def count_gifts(self, uid: str, since: datetime) -> int:
         return sum(1 for g in self.gifts if g["user_id"] == uid and g["sent_at"] >= since)
 
+    def daily_readers(self) -> list[dict]:
+        return [deepcopy(u) for u in self.users.values() if u.get("daily_email")]
+
 
 class MongoStore:
     kind = "mongodb"
@@ -239,6 +242,9 @@ class MongoStore:
     def count_gifts(self, uid: str, since: datetime) -> int:
         return self._call(lambda db: db.gifts.count_documents({"user_id": uid, "sent_at": {"$gte": since}}))
 
+    def daily_readers(self) -> list[dict]:
+        return self._call(lambda db: [self._out(d) for d in db.users.find({"daily_email": True})])
+
 
 def describe_db_error(exc: Exception) -> str:
     text = str(exc)
@@ -284,6 +290,7 @@ def public_user(user: dict, store=None) -> dict:
                   "gifts_per_month": plan["gifts_per_month"], "gifts_used": used,
                   "gifts_left": max(0, plan["gifts_per_month"] - used)} if plan else None),
         "profile": user.get("profile") or {},
+        "daily_email": bool(user.get("daily_email")),
     }
 
 
@@ -380,6 +387,13 @@ def cancel(user: dict, store=None) -> dict:
     store = store or get_store()
     sub = dict(user.get("subscription") or {}, status="cancelled", cancelled_at=now())
     store.update_user(user["_id"], {"subscription": sub})
+    return store.user_by_id(user["_id"])
+
+
+def set_daily_email(user: dict, on: bool, store=None) -> dict:
+    """The reader's own paper by email every morning (see scheduler.py)."""
+    store = store or get_store()
+    store.update_user(user["_id"], {"daily_email": bool(on)})
     return store.user_by_id(user["_id"])
 
 

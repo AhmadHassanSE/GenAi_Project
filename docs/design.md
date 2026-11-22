@@ -33,6 +33,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | `web/` | Home, onboarding, paper, last page, gift preview, sources page | HTML, CSS, vanilla JS, GSAP on the home page |
 | `server/subah/accounts.py` | Sign up, log in, sessions, plans, gift log; MongoDB or in-memory store | pymongo, hashlib.scrypt |
 | `server/subah/mailer.py` | Builds the recipient's gift paper from today's edition and sends it through Gmail | smtplib (SMTP over SSL) |
+| `server/subah/scheduler.py` | The morning run: prints the paper at 06:30 and emails it at 07:00 to readers who asked, once a day | Python thread inside the web server |
 | `web/account.html`, `web/pricing.html` | Log in and sign up, account page, plans and prototype checkout | HTML, CSS, vanilla JS |
 
 ## Data model
@@ -66,6 +67,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | POST | `/api/profile` | Save `{name, city, topics, lang, large}` to the account; the pages call it on every settings change while logged in | Cookie |
 | POST | `/api/gift/preview` | The gift email exactly as it would be sent, without sending | No |
 | POST | `/api/gift/send` | Email the gift paper; needs a plan and gifts left this month | Cookie |
+| POST | `/api/daily` | Turn the reader's own 7 am paper by email on or off `{on}` | Cookie |
 
 Every `POST` that changes account state must carry the header `X-Subah: 1` (see Security).
 
@@ -85,6 +87,7 @@ Every `POST` that changes account state must carry the header `X-Subah: 1` (see 
 | Passwords and sessions | JWT; server sessions | Server sessions, random token, only its hash stored, HttpOnly cookie | Logging out really ends the session; a leaked database has no usable tokens | One database read per request |
 | Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the build | Plans are not paid for |
 | Email | Gmail API with OAuth; Gmail SMTP with an app password | Gmail SMTP with an app password | No OAuth consent screen to set up; works from the Space | Gmail's daily sending limit; one sender address |
+| Morning delivery | External cron service; scheduled cloud job; a thread in the web server | A thread in the web server, with a sent-on date per account | No extra service or cost; the date on each account stops double sends after a restart | Nothing is printed while a free Space sleeps |
 | Read aloud | Text-to-speech API; browser voices | Browser `speechSynthesis` | Free, no key, works offline | Voice quality varies; many devices have no Urdu voice |
 | Roman Urdu | Rule-based transliteration from Urdu; AI writes it with the other two languages | AI, in the same call, then checked in code | Urdu script drops most vowels, so rules give unreadable Roman Urdu; one call keeps the call budget | No standard spelling, so names are checked only inside sentences; a story without Roman Urdu shows English |
 | Topic balance | None; per-topic quota; cap per section | Cap: no section over 30% of the paper (3 of 10), held-back stories refill a short paper | Keeps one big topic from filling the paper while staying mechanical and published | On a one-topic day a widely reported story can be held back for a less reported one |

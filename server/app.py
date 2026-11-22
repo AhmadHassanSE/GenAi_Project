@@ -16,7 +16,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .subah import accounts, feeds, mailer
+from .subah import accounts, feeds, mailer, scheduler
 from .subah.edition import ProfileError, build_edition, clean_profile, load_latest, save_latest
 from .subah.embed import embedder_status
 from .subah.rank import FORMULA
@@ -57,6 +57,31 @@ def warm_up() -> None:
         threading.Thread(target=run, daemon=True).start()
 
 
+class _Accounts:
+    """The account store as it is when called, so the morning run follows a store set up after start."""
+
+    def daily_readers(self):
+        return accounts.get_store().daily_readers()
+
+    def update_user(self, uid, patch):
+        return accounts.get_store().update_user(uid, patch)
+
+
+morning = scheduler.Morning(
+    build=lambda: build_edition({}, source=DEFAULT_SOURCE, pool=15),
+    save=save_latest, store=_Accounts(), render=mailer.render_daily,
+    send=lambda to, subject, html, text, name: mailer.send(to, subject, html, text, name),
+    mail_ready=mailer.mail_configured, lock=_lock)
+_stop_morning = threading.Event()
+
+
+@app.on_event("startup")
+def start_morning_run() -> None:
+    """Print the paper before 7 am and email it to readers who asked (scheduler.py)."""
+    if scheduler.enabled() and "PYTEST_CURRENT_TEST" not in os.environ:
+        threading.Thread(target=morning.run_forever, args=(_stop_morning,), daemon=True).start()
+
+
 @app.middleware("http")
 async def no_stale_pages(request, call_next):
     """Pages and editions change often during a demo; make browsers revalidate instead of showing old copies."""
@@ -88,7 +113,8 @@ def health() -> dict:
     ok, why = ai_configured()
     mail_ok, mail_why = mailer.mail_configured()
     return {"ok": True, "ai": {"enabled": ok, "note": why}, "grouping": embedder_status(), "default_source": DEFAULT_SOURCE,
-            "accounts": accounts.get_store().status(), "email": {"enabled": mail_ok, "note": mail_why}}
+            "accounts": accounts.get_store().status(), "email": {"enabled": mail_ok, "note": mail_why},
+            "morning_run": dict(morning.status(), enabled=scheduler.enabled())}
 
 
 @app.get("/api/outlets")
@@ -218,6 +244,10 @@ class LoginRequest(BaseModel):
     password: str = Field(..., max_length=200)
 
 
+class DailyRequest(BaseModel):
+    on: bool
+
+
 class PlanRequest(BaseModel):
     plan: Literal["basic", "plus"]
 
@@ -294,6 +324,14 @@ def profile_save(body: SavedProfile, request: Request) -> dict:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     profile = {**clean, "name": body.name.replace("<", "").replace(">", "").strip(), "large": body.large}
     user = _account_call(accounts.save_profile, _user(request), profile)
+    return {"user": _account_call(accounts.public_user, user)}
+
+
+@app.post("/api/daily")
+def daily_email(body: DailyRequest, request: Request) -> dict:
+    """Turn the reader's own paper by email at 7:00 am Lahore time on or off."""
+    _same_site_only(request)
+    user = _account_call(accounts.set_daily_email, _user(request), body.on)
     return {"user": _account_call(accounts.public_user, user)}
 
 

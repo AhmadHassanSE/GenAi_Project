@@ -43,6 +43,23 @@ def _names(text: str) -> list[str]:
     return out
 
 
+_ENGLISH_ONLY = {"the", "and", "of", "to", "in", "on", "with", "for", "as", "after", "is", "are", "was", "were", "has",
+                 "have", "by", "from", "at", "its", "their", "will", "be", "an", "said", "says", "amid", "over"}
+
+
+def roman_is_english(story_out: dict) -> bool:
+    """True when the "Roman Urdu" is really English: the same as the English text, or full of English function
+    words (Roman Urdu uses ke, ki, ne, mein, aur, hai instead)."""
+    ro = f"{story_out.get('headline_ro') or ''} {story_out.get('summary_ro') or ''}".strip()
+    if not ro:
+        return False
+    en = f"{story_out.get('headline_en') or ''} {story_out.get('summary_en') or ''}".strip()
+    if fold(ro) == fold(en):
+        return True
+    words = re.findall(r"[a-z']+", ro.lower())
+    return bool(words) and sum(w in _ENGLISH_ONLY for w in words) / len(words) > 0.12
+
+
 def _roman_names(text: str) -> list[str]:
     """Capitalised words in Roman Urdu that are not at the start of a sentence or headline. Roman Urdu has no
     fixed spelling, so a capitalised opening word ("Hukumat ne ...") is not treated as a name; inside a sentence

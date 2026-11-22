@@ -71,13 +71,17 @@ Open http://localhost:8000. Without a server, the pages in `web/` still open fro
 
 Useful tools: `python -m server.tools.check_feeds` checks every feed; `python -m server.tools.export_static` refreshes the bundled sample files.
 
+### Evaluation sheets
+
+`python -m server.tools.evaluate` builds the sheets for the proposal's evaluation and scores them once people fill them in: 200 article pairs for grouping precision and recall (`eval/pairs.csv`, labelled by hand), and the summary audit with native-speaker ratings (`eval/audit.csv`, one row per AI summary; add each day's paper with `audit-add`). See the tool's help for the steps.
+
 ### Run tests
 
 ```bash
 bash scripts/test.sh
 ```
 
-76 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
+85 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
 
 ## Deploy (free, Hugging Face Spaces)
 
@@ -124,7 +128,7 @@ How each item in the project proposal ended up. "Changed in MVP scope" means we 
 | Phase 2: gift papers | Built: $3 and $8 plans (prototype checkout, no payment) and gift email | `/pricing.html`, `/gift.html` |
 | Phase 2: three takeaways and a quiz | Partly: the last page repeats the top three; no quiz | `/end.html` |
 | Phase 2: team briefs | Not built | |
-| Evaluation: 200 hand-labelled pairs, 100-summary audit, native-speaker rating, 30 to 50-user pilot | Partly: 528 labelled pairs on the synthetic fixed set and one real day read by hand; audit, rating and pilot not yet run | [docs/testing.md](docs/testing.md) |
+| Evaluation: 200 hand-labelled pairs, 100-summary audit, native-speaker rating, 30 to 50-user pilot | Tooling built, labelling to do: `server/tools/evaluate.py` made a 200-pair sheet from the real feeds (`eval/pairs.csv`) and the summary audit sheet (`eval/audit.csv`, 7 of 100 so far); both need people to fill them in. Also 528 labelled pairs on the synthetic fixed set. Pilot not yet run | [docs/testing.md](docs/testing.md), `eval/` |
 
 ## Documentation
 

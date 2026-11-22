@@ -25,8 +25,9 @@ or, with the virtual environment active, `python -m pytest server/tests -q`. The
 | Unit / integration added later: accounts, plans, gift email (`test_accounts.py`) | 13 | 13 | 0 |
 | End-to-end / manual added later (browser): pricing, sign up, checkout, account page, gift preview, send without Gmail, phone width | 3 pages | 3 | 0 |
 | Unit / integration added later: Roman Urdu and topic balance (`test_summaries.py`, `test_api.py`, `test_foryou.py`) | 10 | 10 | 0 |
+| Unit / integration added later: Roman Urdu email, settings on the account, feed cap, evaluation sheets, request sizing, Roman Urdu that is English or fails the check (`test_accounts.py`, `test_feeds.py`, `test_evaluate.py`, `test_summaries.py`) | 9 | 9 | 0 |
 
-Total automated tests now: 76, all passing.
+Total automated tests now: 85, all passing.
 
 ## Edge cases covered
 
@@ -80,6 +81,8 @@ Total automated tests now: 76, all passing.
 | Generate-now time, larger outlet list | Same, 658 reports, model already loaded, no embeddings cached | 110 s, of which 107 s embedding the reports on a laptop CPU; once per server process (the server warms up at start, and a regenerated paper embeds only reports it has not seen) |
 | AI calls per paper | `edition.ai.calls` with batches of 5 | 2 for 10 stories, 0 when cached |
 | Model choice | Same 10 real stories, grounding check pass rate | openai/gpt-oss-120b: 7 of 10, then 9 of 10 after a prompt fix on name spelling, about 8 s; qwen/qwen3.8-27b: could not run a full paper, its free-tier limit is 8,000 tokens a minute |
+| Real AI run on the larger outlet list (2026-11-22) | One paper from the live snapshot, `openai/gpt-oss-120b` on Groq's free tier | First try: every call refused (HTTP 413). The free tier allows 8,000 tokens per request, counting the reserved output, and 20-outlet stories are larger. Fixed by sending at most 6 sources per story (one per outlet first, descriptions cut to 240 characters), sizing batches from a token estimate and reserving output per story. Then: 7 of 10 stories summarised in 3 calls; 2 left out by the model, 1 failed the source check |
+| Roman Urdu with the real model | Same run, read by hand | First prompt: the model copied English into the Roman Urdu fields, and the source check passed it. Now English is detected in code and only the Roman Urdu is dropped. With the example in the prompt, 4 of 7 summaries had real Roman Urdu (for example "Lahore dobara aalmi aloodgi ki fehrist mein sar farisht, AQI 500 se zyada"); one headline was half English. Quality to be rated by a native speaker on `eval/audit.csv` |
 | Grounding check on real AI output | Rejections read by hand | All rejections were real: names written in a spelling no source used ("Turkish" for "Turkiye"; English spellings of names found only in Urdu sources) |
 
 ## Defect log
@@ -100,7 +103,7 @@ Total automated tests now: 76, all passing.
 ## Known untested areas
 
 - Urdu and Roman Urdu wording of AI summaries: needs a review by an Urdu speaker (the proposal's 1-to-5 native-speaker rating has not been run yet).
-- Roman Urdu with the real model: covered by tests with a fake AI; a live paper needs a run with `GROQ_API_KEY`.
+- Roman Urdu with the real model: one live paper so far (see Measured metrics); quality not yet rated by a native speaker.
 - Grouping on several real days: tuned on one day of feeds plus the fixed set.
 - Screen readers: keyboard and focus were checked by hand; no screen-reader pass yet.
 - Gift email through real Gmail: tested with a fake sender; a real send needs the Gmail app password on the server.

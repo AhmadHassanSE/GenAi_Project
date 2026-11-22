@@ -75,6 +75,29 @@ def brief(story, lang: str, max_words: int = 50) -> dict | None:
     return None
 
 
+AI_SOURCES = int(os.environ.get("SUBAH_AI_SOURCES", "6"))
+AI_DESC_CHARS = 240
+
+
+def ai_sources(story, limit: int = AI_SOURCES) -> list[dict]:
+    """The reports sent to the AI for one story: one per outlet first, at most `limit`, keeping at least one
+    Urdu report when the story has one, descriptions cut to AI_DESC_CHARS. Big stories from 20 outlets would
+    otherwise overflow the AI's request limit. The grounding check uses this same set."""
+    first, rest, seen = [], [], set()
+    for a in story.articles:
+        (rest if a.outlet_id in seen else first).append(a)
+        seen.add(a.outlet_id)
+    picked = (first + rest)[:limit]
+    if not any(a.lang == "ur" for a in picked):
+        ur = next((a for a in story.articles if a.lang == "ur"), None)
+        if ur is not None:
+            picked[-1] = ur
+    def cut(text: str) -> str:
+        return text if len(text) <= AI_DESC_CHARS else text[:AI_DESC_CHARS].rsplit(" ", 1)[0] + "…"
+    return [{"id": a.id, "outlet": a.outlet_name, "lang": a.lang, "title": a.title, "description": cut(a.summary or "")}
+            for a in picked]
+
+
 def latest_snapshot() -> Path | None:
     if not SNAPSHOTS_DIR.exists():
         return None
@@ -125,11 +148,7 @@ def build_edition(profile: dict | None, source: str = "fixtures", client=None, c
           "multi": sum(1 for s in stories if s.outlet_count > 1)})
 
     picked = rank(stories, profile, limit=max(1, min(15, pool or PAPER_SIZE)))
-    items = [{
-        "id": p["story"].id,
-        "sources": [{"id": a.id, "outlet": a.outlet_name, "lang": a.lang, "title": a.title, "description": a.summary}
-                    for a in p["story"].articles],
-    } for p in picked]
+    items = [{"id": p["story"].id, "sources": ai_sources(p["story"])} for p in picked]
     emit({"type": "ranked", "picked": len(picked)})
     kwargs = {} if cache_path == "default" else {"cache_path": cache_path}
     run = summarize(items, client=client, **kwargs)

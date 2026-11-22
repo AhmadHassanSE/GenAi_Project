@@ -6,7 +6,7 @@ import pytest
 
 from server.subah.edition import build_edition
 from server.subah.grounding import check
-from server.subah.summarize import summarize
+from server.subah.summarize import TOKEN_LIMIT, estimate_tokens, make_batches, output_budget, summarize, SYSTEM
 
 SOURCES = [
     {"id": "a1", "outlet": "Dawn", "lang": "en", "title": "Govt keeps petrol price unchanged, raises diesel by Rs3 per litre",
@@ -62,6 +62,41 @@ def test_roman_urdu_reaches_the_edition_only_when_written():
     run = summarize(ITEMS[:2], client=FakeClient(reply), cache_path=None)
     assert run.results["s0"]["ro"]["headline"] == "Petrol ki qeemat barqarar"
     assert "ro" not in run.results["s1"]  # no Roman Urdu written: the page shows English for this story
+
+
+def test_english_in_the_roman_urdu_drops_only_the_roman_urdu():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        for s in data["stories"]:
+            s.update(headline_ro=s["headline_en"], summary_ro="Diesel went up for the next fortnight, the government said.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:2], client=FakeClient(reply), cache_path=None)
+    assert all(r["status"] == "ai" and "ro" not in r for r in run.results.values())
+    assert run.stats()["roman_dropped"] == 2
+
+
+def test_a_failed_roman_urdu_check_drops_only_the_roman_urdu():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        data["stories"][0].update(headline_ro="Diesel 9 rupay mehnga", summary_ro="Hukumat ne diesel 9 rupay mehnga kar diya.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:1], client=FakeClient(reply), cache_path=None)
+    assert run.results["s0"]["status"] == "ai" and "ro" not in run.results["s0"]
+    assert run.stats()["roman_dropped"] == 1
+
+
+def test_batches_fit_the_request_limit():
+    long_desc = "پیٹرول کی قیمت " * 120  # Urdu costs more tokens per character
+    items = [{"id": f"s{i}", "sources": [dict(SOURCES[1], id=f"a{i}{k}", description=long_desc) for k in range(6)]}
+             for i in range(10)]
+    batches = make_batches(items, batch_size=5)
+    assert [it["id"] for b in batches for it in b] == [it["id"] for it in items]  # order kept, nothing lost
+    for b in batches:
+        size = estimate_tokens(SYSTEM) + sum(estimate_tokens(json.dumps(it, ensure_ascii=False)) for it in b)
+        assert len(b) == 1 or size + output_budget(len(b)) <= TOKEN_LIMIT * 0.9
+    assert len(make_batches(ITEMS, batch_size=5)) == 2  # small stories still go five at a time
 
 
 def test_citing_sources_from_another_story_is_rejected():

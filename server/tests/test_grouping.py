@@ -1,4 +1,4 @@
-"""Judge checks: duplicates are grouped correctly, including across languages, and coverage labels match
+"""Checks: duplicates are grouped correctly, including across languages, and coverage labels match
 the actual number of distinct outlets."""
 from collections import defaultdict
 from itertools import combinations

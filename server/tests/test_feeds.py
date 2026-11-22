@@ -1,4 +1,4 @@
-"""Judge check: bad feed data (malformed, empty or duplicate items) is handled without crashing."""
+"""Check: bad feed data (malformed, empty or duplicate items) is handled without crashing."""
 from datetime import datetime, timezone
 
 from server.subah import feeds

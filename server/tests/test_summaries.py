@@ -1,4 +1,4 @@
-"""Judge checks: summaries contain no claims absent from the linked sources, and the paper still generates
+"""Checks: summaries contain no claims absent from the linked sources, and the paper still generates
 when the AI fails."""
 import json
 

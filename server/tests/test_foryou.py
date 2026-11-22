@@ -1,4 +1,4 @@
-"""Judge check: "For you" tags appear only when the story actually matches the reader's settings."""
+"""Check: "For you" tags appear only when the story actually matches the reader's settings."""
 from datetime import datetime, timezone
 
 from server.subah.feeds import Article

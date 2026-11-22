@@ -21,7 +21,7 @@ from .textnorm import clean_text, fold, is_urdu
 
 SERVER_DIR = Path(__file__).resolve().parent.parent
 OUTLETS_PATH = SERVER_DIR / "outlets.json"
-USER_AGENT = "SubahBot/0.1 (hackathon prototype; reads public RSS feeds only)"
+USER_AGENT = "SubahBot/0.1 (student project; reads public RSS feeds only)"
 
 
 @dataclass

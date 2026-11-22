@@ -42,7 +42,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 - **Edition**: profile (city, topics, language), ten stories (rank, score parts, coverage, For you tags, summary or headline fallback, sources), stats, AI usage, feed report.
 - **Picks**: the reader's pass, love or keep per story, kept with the edition in the browser; the paper shows loved, then kept, each in formula order.
 - **Reader profile**: kept in the browser only (`localStorage`): masthead name, city, topics, language, large print.
-- **User** (MongoDB `users`, added after approval): name, email (unique), scrypt password hash, created time, subscription (plan, status, start, renewal, `demo: true`), profile.
+- **User** (MongoDB `users`, added after the first MVP): name, email (unique), scrypt password hash, created time, subscription (plan, status, start, renewal, `demo: true`), profile.
 - **Session** (`sessions`): SHA-256 hash of a random token, user id, expiry (30 days; MongoDB removes expired sessions). The token itself is only in the reader's HttpOnly cookie.
 - **Gift log** (`gifts`): user id, recipient email, time sent, language, city. Used for the monthly allowance.
 
@@ -83,7 +83,7 @@ Every `POST` that changes account state must carry the header `X-Subah: 1` (see 
 | No-summary stories | Show "no summary"; show headlines only; quote the outlet | One retry with the rejection reasons, then the outlet's own description, credited and linked | The reader always gets a sentence of text, and it is the outlet's words, not ours | A quoted description can be less neutral than a summary |
 | Accounts store | SQLite on the Space; MongoDB Atlas | MongoDB Atlas, in-memory when not configured | The Space's disk is wiped on restart; Atlas has a free tier | Needs a network path from the Space to Atlas |
 | Passwords and sessions | JWT; server sessions | Server sessions, random token, only its hash stored, HttpOnly cookie | Logging out really ends the session; a leaked database has no usable tokens | One database read per request |
-| Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the event | Plans are not paid for |
+| Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the build | Plans are not paid for |
 | Email | Gmail API with OAuth; Gmail SMTP with an app password | Gmail SMTP with an app password | No OAuth consent screen to set up; works from the Space | Gmail's daily sending limit; one sender address |
 | Read aloud | Text-to-speech API; browser voices | Browser `speechSynthesis` | Free, no key, works offline | Voice quality varies; many devices have no Urdu voice |
 | Roman Urdu | Rule-based transliteration from Urdu; AI writes it with the other two languages | AI, in the same call, then checked in code | Urdu script drops most vowels, so rules give unreadable Roman Urdu; one call keeps the call budget | No standard spelling, so names are checked only inside sentences; a story without Roman Urdu shows English |
@@ -114,7 +114,7 @@ Reader settings stay in the browser. The server receives city, topics and langua
 - Grouping quality depends on the embedding model (see testing.md).
 - Content licensing with publishers is not yet agreed (README, Known limitations).
 
-## Accounts, plans and gift email (added after approval)
+## Accounts, plans and gift email (added after the first MVP)
 
 ### Threat model
 

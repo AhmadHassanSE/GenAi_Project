@@ -33,6 +33,14 @@ def test_fixture_drops_are_counted(collection):
     assert s["dropped"]["no_title"] == 1
 
 
+def test_busy_feed_keeps_only_its_newest_items():
+    items = "".join(item(title=f"Story {m}", link=f"https://example.com/{m}",
+                         date=f"Tue, 10 Nov 2026 01:{m:02d}:00 +0000") for m in range(10))
+    got, rep = feeds.parse_feed(rss(items), OUTLET, FEED, NOW, max_items=4)
+    assert [a.title for a in got] == ["Story 9", "Story 8", "Story 7", "Story 6"]
+    assert rep.kept == 4 and rep.dropped["over_feed_limit"] == 6
+
+
 def test_malformed_xml():
     got, rep = feeds.parse_feed("<rss><channel><item><title>broken", OUTLET, FEED, NOW)
     assert got == [] and rep.status == "malformed"

@@ -8,6 +8,7 @@ from __future__ import annotations
 import calendar
 import hashlib
 import json
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
@@ -109,7 +110,13 @@ def article_id(outlet_id: str, link: str, title: str) -> str:
     return "a" + hashlib.sha1(f"{outlet_id}|{canonical_link(link)}|{title}".encode("utf-8")).hexdigest()[:10]
 
 
-def parse_feed(raw: bytes | str | None, outlet: dict, feed: dict, now: datetime, max_age_hours: float = 36) -> tuple[list[Article], FeedReport]:
+MAX_PER_FEED = int(os.environ.get("SUBAH_MAX_PER_FEED", "60"))
+
+
+def parse_feed(raw: bytes | str | None, outlet: dict, feed: dict, now: datetime, max_age_hours: float = 36,
+               max_items: int | None = None) -> tuple[list[Article], FeedReport]:
+    """max_items: keep only the newest this many usable items (default MAX_PER_FEED), so one very busy feed
+    cannot multiply the grouping work. Counts are per outlet, so this never changes a coverage label's meaning."""
     report = FeedReport(outlet_id=outlet["id"], outlet=outlet["name"], url=feed["url"], lang=feed.get("lang", "en"))
     if raw is None or (isinstance(raw, (bytes, str)) and not raw.strip()):
         report.status = "empty"
@@ -172,6 +179,12 @@ def parse_feed(raw: bytes | str | None, outlet: dict, feed: dict, now: datetime,
             link=link,
             published=published,
         ))
+    cap = MAX_PER_FEED if max_items is None else max_items
+    if cap and len(out) > cap:
+        out.sort(key=lambda a: a.published, reverse=True)
+        for _ in out[cap:]:
+            report.drop("over_feed_limit")
+        out = out[:cap]
     report.kept = len(out)
     if not out and parsed.get("bozo"):
         report.status = "malformed"

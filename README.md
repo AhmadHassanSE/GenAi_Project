@@ -109,7 +109,7 @@ How each item in the project proposal ended up. "Changed in MVP scope" means we 
 
 | Proposal item | Status | Where |
 |---|---|---|
-| Overnight ingestion of 20 to 30 outlets | Partly: 16 outlets, 15 working feeds; article text is not fetched (feed metadata only, for licensing) | `server/outlets.json`, `/sources.html` |
+| Overnight ingestion of 20 to 30 outlets | Built: 20 outlets with working feeds (25 feeds; 3 more outlets listed but paused), newest 60 items per feed; article text is not fetched (feed metadata only, for licensing) | `server/outlets.json`, `/sources.html` |
 | Multilingual embeddings and clustering across English and Urdu | Built | `embed.py`, `group.py` |
 | Ranking by outlets, recency and topic balance | Built: outlets plus the reader's city and topics; recency breaks ties; no section over 3 of 10 | `rank.py`, `/sources.html` |
 | Grounded summaries with sources | Built; sources are linked for each story, not for each claim | `summarize.py`, `grounding.py` |

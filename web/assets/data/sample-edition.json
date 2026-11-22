@@ -1,6 +1,6 @@
 {
  "edition_id": "202611100200-10",
- "generated_at": "2026-11-10T08:36:44.423727+00:00",
+ "generated_at": "2026-11-22T16:39:56.893000+00:00",
  "as_of": "2026-11-10T02:00:00+00:00",
  "source": "fixtures",
  "profile": {
@@ -12,8 +12,9 @@
   "lang": "en"
  },
  "ranking": {
-  "en": "Score = outlets reporting the story, plus 2 if it names your city, plus 1 per matching topic (at most 2). Ties go to the newest report.",
-  "ur": "اسکور = خبر رپورٹ کرنے والے اداروں کی تعداد، آپ کے شہر کا ذکر ہو تو ۲ مزید، اور ہر ملتے موضوع کا ۱ (زیادہ سے زیادہ ۲)۔ برابری پر تازہ ترین رپورٹ پہلے۔"
+  "en": "Score = outlets reporting the story, plus 2 if it names your city, plus 1 per matching topic (at most 2). Ties go to the newest report. No section fills more than 3 of 10 places.",
+  "ur": "اسکور = خبر رپورٹ کرنے والے اداروں کی تعداد، آپ کے شہر کا ذکر ہو تو ۲ مزید، اور ہر ملتے موضوع کا ۱ (زیادہ سے زیادہ ۲)۔ برابری پر تازہ ترین رپورٹ پہلے۔ کوئی ایک شعبہ ۱۰ میں سے ۳ سے زیادہ جگہیں نہیں لیتا۔",
+  "ro": "Score = khabar report karne wale idaron ki tadaad, aap ke shehar ka zikr ho to 2 mazeed, aur har milte mauzoo ka 1 (zyada se zyada 2). Barabari par sab se taaza report pehle. Koi ek shoba 10 mein se 3 se zyada jagah nahin leta."
  },
  "stories": [
   {
@@ -28,7 +29,8 @@
    "outlet_count": 4,
    "coverage": {
     "en": "Reported by 4 outlets",
-    "ur": "۴ اداروں نے رپورٹ کیا"
+    "ur": "۴ اداروں نے رپورٹ کیا",
+    "ro": "4 idaron ne report kiya"
    },
    "outlets": [
     "BBC",
@@ -152,7 +154,8 @@
    "outlet_count": 5,
    "coverage": {
     "en": "Reported by 5 outlets",
-    "ur": "۵ اداروں نے رپورٹ کیا"
+    "ur": "۵ اداروں نے رپورٹ کیا",
+    "ro": "5 idaron ne report kiya"
    },
    "outlets": [
     "ARY News",
@@ -275,7 +278,8 @@
    "outlet_count": 4,
    "coverage": {
     "en": "Reported by 4 outlets",
-    "ur": "۴ اداروں نے رپورٹ کیا"
+    "ur": "۴ اداروں نے رپورٹ کیا",
+    "ro": "4 idaron ne report kiya"
    },
    "outlets": [
     "ARY News",
@@ -378,7 +382,8 @@
    "outlet_count": 4,
    "coverage": {
     "en": "Reported by 4 outlets",
-    "ur": "۴ اداروں نے رپورٹ کیا"
+    "ur": "۴ اداروں نے رپورٹ کیا",
+    "ro": "4 idaron ne report kiya"
    },
    "outlets": [
     "Arab News Pakistan",
@@ -480,7 +485,8 @@
    "outlet_count": 1,
    "coverage": {
     "en": "Reported by 1 outlet",
-    "ur": "۱ ادارے نے رپورٹ کیا"
+    "ur": "۱ ادارے نے رپورٹ کیا",
+    "ro": "1 idare ne report kiya"
    },
    "outlets": [
     "Pakistan Today"
@@ -561,7 +567,8 @@
    "outlet_count": 3,
    "coverage": {
     "en": "Reported by 3 outlets",
-    "ur": "۳ اداروں نے رپورٹ کیا"
+    "ur": "۳ اداروں نے رپورٹ کیا",
+    "ro": "3 idaron ne report kiya"
    },
    "outlets": [
     "Express",
@@ -653,7 +660,8 @@
    "outlet_count": 3,
    "coverage": {
     "en": "Reported by 3 outlets",
-    "ur": "۳ اداروں نے رپورٹ کیا"
+    "ur": "۳ اداروں نے رپورٹ کیا",
+    "ro": "3 idaron ne report kiya"
    },
    "outlets": [
     "Business Recorder",
@@ -745,7 +753,8 @@
    "outlet_count": 2,
    "coverage": {
     "en": "Reported by 2 outlets",
-    "ur": "۲ اداروں نے رپورٹ کیا"
+    "ur": "۲ اداروں نے رپورٹ کیا",
+    "ro": "2 idaron ne report kiya"
    },
    "outlets": [
     "DW",
@@ -828,7 +837,8 @@
    "outlet_count": 2,
    "coverage": {
     "en": "Reported by 2 outlets",
-    "ur": "۲ اداروں نے رپورٹ کیا"
+    "ur": "۲ اداروں نے رپورٹ کیا",
+    "ro": "2 idaron ne report kiya"
    },
    "outlets": [
     "Al Jazeera",
@@ -904,7 +914,8 @@
    "outlet_count": 1,
    "coverage": {
     "en": "Reported by 1 outlet",
-    "ur": "۱ ادارے نے رپورٹ کیا"
+    "ur": "۱ ادارے نے رپورٹ کیا",
+    "ro": "1 idare ne report kiya"
    },
    "outlets": [
     "Dawn"
@@ -967,10 +978,10 @@
   "feeds_ok": 16,
   "feeds_failed": 4,
   "timings_ms": {
-   "collect": 60,
-   "group_and_tag": 6012,
+   "collect": 53,
+   "group_and_tag": 6471,
    "summaries": 0,
-   "total": 6074
+   "total": 6524
   }
  },
  "ai": {

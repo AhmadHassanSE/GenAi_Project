@@ -16,7 +16,7 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 
 | ID | Requirement | Priority | Status |
 |----|-------------|----------|--------|
-| FR-01 | Read the feeds on a published outlet list; use only feed metadata (headline, description, link, time) | Must | Done |
+| FR-01 | Read the feeds on a published outlet list; use only feed metadata (headline, description, link, time) | Must | Done: 20 outlets, 25 feeds; newest 60 items kept per feed |
 | FR-02 | Group reports of the same event across outlets and across English and Urdu | Must | Done (retuning on real feeds, see testing.md) |
 | FR-03 | Label each story with the count of distinct outlets ("Reported by N outlets") | Must | Done |
 | FR-04 | Rank stories by a published mechanical formula and keep the top ten | Must | Done; topic balance added after the first MVP (FR-24) |

@@ -67,8 +67,15 @@
           "lang": "en",
           "enabled": true,
           "status": "answered with items (checked 2026-11-10)"
+        },
+        {
+          "url": "https://jang.com.pk/rss/1/1",
+          "lang": "ur",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
         }
-      ]
+      ],
+      "note": "The News (English) and Daily Jang (Urdu), both Jang Group newspapers"
     },
     {
       "id": "brecorder",
@@ -183,6 +190,117 @@
       ]
     },
     {
+      "id": "dailytimes",
+      "name": "Daily Times",
+      "country": "PK",
+      "site": "https://dailytimes.com.pk",
+      "feeds": [
+        {
+          "url": "https://dailytimes.com.pk/feed/",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "nation",
+      "name": "The Nation",
+      "country": "PK",
+      "site": "https://www.nation.com.pk",
+      "note": "The Nation (English) and Nawa-i-Waqt (Urdu), both Nawa-i-Waqt Group newspapers",
+      "feeds": [
+        {
+          "url": "https://www.nation.com.pk/rss/latest",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        },
+        {
+          "url": "https://www.nawaiwaqt.com.pk/rss/latest",
+          "lang": "ur",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "dailypakistan",
+      "name": "Daily Pakistan",
+      "country": "PK",
+      "site": "https://en.dailypakistan.com.pk",
+      "feeds": [
+        {
+          "url": "https://en.dailypakistan.com.pk/feed",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "aaj",
+      "name": "Aaj News",
+      "country": "PK",
+      "site": "https://www.aaj.tv",
+      "feeds": [
+        {
+          "url": "https://english.aaj.tv/feeds/latest-news",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        },
+        {
+          "url": "https://www.aaj.tv/feeds/latest-news",
+          "lang": "ur",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "mmnews",
+      "name": "MM News",
+      "country": "PK",
+      "site": "https://mmnews.tv",
+      "feeds": [
+        {
+          "url": "https://mmnews.tv/feed/",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "pakobserver",
+      "name": "Pakistan Observer",
+      "country": "PK",
+      "site": "https://pakobserver.net",
+      "feeds": [
+        {
+          "url": "https://pakobserver.net/feed/",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
+      "id": "minutemirror",
+      "name": "Minute Mirror",
+      "country": "PK",
+      "site": "https://minutemirror.com.pk",
+      "feeds": [
+        {
+          "url": "https://minutemirror.com.pk/feed/",
+          "lang": "en",
+          "enabled": true,
+          "status": "answered with items (checked 2026-11-22)"
+        }
+      ]
+    },
+    {
       "id": "bbc",
       "name": "BBC",
       "country": "GB",
@@ -234,7 +352,7 @@
           "url": "https://www.aljazeera.com/xml/rss/all.xml",
           "lang": "en",
           "enabled": true,
-          "status": "could not connect from the build network (checked 2026-11-10); recheck"
+          "status": "could not connect from the build network (checked 2026-11-22); recheck"
         }
       ]
     },

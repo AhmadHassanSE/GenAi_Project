@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   $("#presets").innerHTML = S.TEST_READERS.map((r, i) => {
     const city = catalog.cities.find((c) => c.id === r.city);
-    return `<button class="preset" type="button" data-i="${i}"><b>${S.esc(r.label)}</b><span>${S.esc(city ? city.en : r.city)}, ${r.lang === "ur" ? "Urdu" : "English"}${r.large ? ", large print" : ""}</span></button>`;
+    return `<button class="preset" type="button" data-i="${i}"><b>${S.esc(r.label)}</b><span>${S.esc(city ? city.en : r.city)}, ${r.lang === "ur" ? "Urdu" : r.lang === "ro" ? "Roman Urdu" : "English"}${r.large ? ", large print" : ""}</span></button>`;
   }).join("");
   $("#presets").addEventListener("click", (e) => {
     const b = e.target.closest(".preset");
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     await live.replay(edition);
-    const lang = profile.lang === "ur" ? "ur" : "en";
+    const lang = ["ur", "ro"].includes(profile.lang) ? profile.lang : "en";
     [["#ps-h1", edition.stories[0]], ["#ps-h2", edition.stories[1]]].forEach(([sel, story]) => {
       if (!story) return;
       const el = $(sel);
@@ -179,9 +179,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const head = S.headlineOf(st, lang);
     const headUr = /[؀-ۿ]/.test(head);
     const own = st.brief ? (st.brief[lang] || st.brief.en || st.brief.ur) : null;
-    const dek = st.summary ? st.summary[lang].text : own ? own.text : (lang === "ur" ? `سرخی بشکریہ ${st.headline_from.ur}` : `Headline from ${st.headline_from.en}`);
-    const outlets = lang === "ur" ? `${S.toUrduDigits(st.outlet_count)} ادارے` : `${st.outlet_count} outlet${st.outlet_count === 1 ? "" : "s"}`;
-    const ui = lang === "ur" ? { pass: "چھوڑیں", love: "پسندیدہ", keep: "رکھیں" } : { pass: "Pass", love: "Love", keep: "Keep" };
+    const dek = st.summary ? (st.summary[lang] || st.summary.en).text : own ? own.text : (lang === "ur" ? `سرخی بشکریہ ${st.headline_from.ur}` : lang === "ro" ? `Surkhi bashukriya ${st.headline_from.en}` : `Headline from ${st.headline_from.en}`);
+    const outlets = lang === "ur" ? `${S.toUrduDigits(st.outlet_count)} ادارے` : lang === "ro" ? `${st.outlet_count} idare` : `${st.outlet_count} outlet${st.outlet_count === 1 ? "" : "s"}`;
+    const ui = lang === "ur" ? { pass: "چھوڑیں", love: "پسندیدہ", keep: "رکھیں" } : lang === "ro" ? { pass: "Chhorein", love: "Pasand", keep: "Rakhein" } : { pass: "Pass", love: "Love", keep: "Keep" };
     return `
       <div class="pcard__top"><span class="pcard__topic"${lang === "ur" ? ' lang="ur"' : ""}>${S.esc(topic)}</span><span class="pcard__outlets"${lang === "ur" ? ' lang="ur"' : ""}>${outlets}</span></div>
       <h3 class="pcard__head"${headUr ? ' lang="ur" dir="rtl"' : ""}>${S.esc(head)}</h3>
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   function renderDeck() {
     const stories = printed.stories;
-    const lang = profile.lang === "ur" ? "ur" : "en";
+    const lang = ["ur", "ro"].includes(profile.lang) ? profile.lang : "en";
     deckEl.innerHTML = "";
     const depth = Math.min(3, stories.length - index);
     for (let d = depth - 1; d >= 0; d--) {

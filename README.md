@@ -8,7 +8,7 @@ Quick links: [Today's paper](https://ranaahmad3048-subah.hf.space/paper.html) ·
 
 ## What it does
 
-A morning paper for one reader: the day's top ten stories, grouped across Pakistani and world newsrooms, each labelled with how many outlets reported it and linking every report, in English or Urdu, in large print if wanted. Then it ends.
+A morning paper for one reader: the day's top ten stories, grouped across Pakistani and world newsrooms, each labelled with how many outlets reported it and linking every report, in English, Urdu or Roman Urdu, in large print if wanted. Then it ends.
 
 ## Problem and user
 
@@ -23,7 +23,7 @@ People in Pakistan, and their families abroad, see the same story many times acr
 
 1. Open the live URL. Scroll the front page: the clustering scene and "Then we pick ten" show how grouping and ranking work.
 2. Click **Make my paper**, choose **Test reader A**, then **Next: topics**, then **Generate today's paper**.
-3. On the paper: each story shows **Reported by N outlets**, its sources with links, **For you** tags with the word that matched, and why it is here. Switch to **اردو** and **large print** in the top bar. **Generate today's paper now** rebuilds it.
+3. On the paper: each story shows **Reported by N outlets**, its sources with links, **For you** tags with the word that matched, and why it is here. Switch to **اردو**, **Roman** (Roman Urdu) and **large print** in the top bar. **Generate today's paper now** rebuilds it.
 4. Open **Our sources** to see the outlet list and the ranking formula, and **Finish today's paper** for the last page.
 5. Open **Pricing**, choose **Plus** and sign up with a test email. Checkout is a prototype: nothing is charged. Then on **For family**, enter a recipient email you own and **Send their paper**, or **Preview the email** without sending.
 
@@ -76,7 +76,7 @@ Useful tools: `python -m server.tools.check_feeds` checks every feed; `python -m
 bash scripts/test.sh
 ```
 
-66 tests. See [docs/testing.md](docs/testing.md) and [docs/judge-checks.md](docs/judge-checks.md).
+76 tests. See [docs/testing.md](docs/testing.md) and [docs/judge-checks.md](docs/judge-checks.md).
 
 ## Deploy (free, Hugging Face Spaces)
 
@@ -97,10 +97,33 @@ The first start takes a few minutes (it installs packages and downloads the 1.1 
 - **Event rule on pre-collected data:** [insert ruling]. The app can run on live feeds, a saved snapshot or the bundled synthetic fixtures.
 - Grouping was tuned on one real day of feeds and a fixed test set; ongoing stories can collect several related developments into one group.
 - AI summaries use Groq (`openai/gpt-oss-120b`) on the free tier. On a real day 9 of 10 stories passed the source check in 2 calls; the free tier has per-minute token limits, so very fast repeated generations may fall back to headlines until the minute resets.
-- Urdu AI output still needs review by an Urdu speaker.
+- Urdu and Roman Urdu AI output still needs review by an Urdu speaker. A story the AI wrote no Roman Urdu for is shown in English, with a note. Gift emails and the last page are in English or Urdu only.
 - Payments are a prototype: choosing a plan activates it without charging. A payment provider (for example Stripe) is needed before launch.
 - Gift emails go out from one Gmail account, which Google limits to about 500 messages a day.
 - Approval note: the approved plan cut payments; plans and gift emails were added on request after approval.
+
+## Proposal vs. build
+
+How each item in the project proposal ended up. "Changed at approval" means the idea approval asked for it to be cut or changed. The full list is in [docs/requirements.md](docs/requirements.md).
+
+| Proposal item | Status | Where |
+|---|---|---|
+| Overnight ingestion of 20 to 30 outlets | Partly: 16 outlets, 15 working feeds; article text is not fetched (feed metadata only, for licensing) | `server/outlets.json`, `/sources.html` |
+| Multilingual embeddings and clustering across English and Urdu | Built | `embed.py`, `group.py` |
+| Ranking by outlets, recency and topic balance | Built: outlets plus the reader's city and topics; recency breaks ties; no section over 3 of 10 | `rank.py`, `/sources.html` |
+| Grounded summaries with sources | Built; sources are linked for each story, not for each claim | `summarize.py`, `grounding.py` |
+| "Why it matters" and "what is not yet known" | Changed at approval: removed | |
+| Confirmed / Single source / Unconfirmed badges, reliability tiers | Changed at approval: replaced by "Reported by N outlets" | `group.py`, `/sources.html` |
+| Factuality check (second LLM pass or entailment model) | Built as a deterministic code check on numbers and names, with one retry | `grounding.py` |
+| "For you" line and fuel-price table | Rule-based "For you" tags showing the matched word; no price table (approval: no predictions about a reader's costs) | `tags.py` |
+| English, Urdu and Roman Urdu; large print | Built | Paper page language switch |
+| Delivery by web, and WhatsApp or email at 7 am | Web, plus gift papers by email; no scheduled daily send or WhatsApp yet | `mailer.py` |
+| "You're done for today" | Built | `/end.html` |
+| Phase 2: audio | Built with the browser's own voices | Paper page, Listen |
+| Phase 2: gift papers | Built: $3 and $8 plans (prototype checkout, no payment) and gift email | `/pricing.html`, `/gift.html` |
+| Phase 2: three takeaways and a quiz | Partly: the last page repeats the top three; no quiz | `/end.html` |
+| Phase 2: team briefs | Not built | |
+| Evaluation: 200 hand-labelled pairs, 100-summary audit, native-speaker rating, 30 to 50-user pilot | Partly: 528 labelled pairs on the synthetic fixed set and one real day read by hand; audit, rating and pilot not yet run | [docs/testing.md](docs/testing.md) |
 
 ## Documentation
 
@@ -114,4 +137,5 @@ The first start takes a few minutes (it installs packages and downloads the 1.1 
 
 | Name | Role |
 |------|------|
-|      |      |
+| Sameer (23i-3061) |      |
+| Rana Ahmad Hassan (23L-3048) |      |

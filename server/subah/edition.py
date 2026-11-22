@@ -41,8 +41,8 @@ def clean_profile(raw: dict | None) -> dict:
     if len(topics) > 5:
         raise ProfileError("choose at most 5 topics")
     lang = raw.get("lang") or "en"
-    if lang not in ("en", "ur"):
-        raise ProfileError("lang must be 'en' or 'ur'")
+    if lang not in ("en", "ur", "ro"):
+        raise ProfileError("lang must be 'en', 'ur' or 'ro' (Roman Urdu)")
     return {"city": city, "topics": topics, "lang": lang}
 
 
@@ -148,7 +148,7 @@ def build_edition(profile: dict | None, source: str = "fixtures", client=None, c
             "score": p["score"],
             "score_parts": p["parts"],
             "outlet_count": s.outlet_count,
-            "coverage": {"en": coverage_label(s.outlet_count, "en"), "ur": coverage_label(s.outlet_count, "ur")},
+            "coverage": {l: coverage_label(s.outlet_count, l) for l in ("en", "ur", "ro")},
             "outlets": s.outlet_names,
             # in catalog order, so the section label prefers specific topics over "World"
             "topics": [{"id": k, "en": TOPICS[k][0], "ur": TOPICS[k][1], "term": s.topics[k]} for k in TOPICS if k in s.topics],
@@ -156,7 +156,8 @@ def build_edition(profile: dict | None, source: str = "fixtures", client=None, c
             "for_you": p["for_you"],
             "summary_status": res["status"],
             "summary_note": res.get("reason"),
-            "summary": {"en": res["en"], "ur": res["ur"]} if res["status"] == "ai" else None,
+            # "ro" (Roman Urdu) is present only when the AI wrote one that passed the check; pages fall back to English
+            "summary": {k: res[k] for k in ("en", "ur", "ro") if k in res} if res["status"] == "ai" else None,
             "used_sources": res.get("used_sources", []),
             "headline": {"en": en_first.title, "ur": ur_first.title},
             "brief": None if res["status"] == "ai" else {"en": brief(s, "en"), "ur": brief(s, "ur")},

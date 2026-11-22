@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .grounding import check
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v3"  # v3: Roman Urdu added
 MODEL = os.environ.get("SUBAH_MODEL", "openai/gpt-oss-120b")
 BATCH_SIZE = int(os.environ.get("SUBAH_AI_BATCH", "5"))
 MAX_CALLS = int(os.environ.get("SUBAH_MAX_AI_CALLS", "3"))
@@ -27,10 +27,10 @@ CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "cache" / "summar
 SYSTEM = """You write short summaries for Subah, a morning news paper read in Pakistan.
 
 Each story comes with the headlines and feed descriptions published by several outlets about the same event.
-For each story write a neutral headline (at most 14 words) and a summary of one or two sentences (at most 55 words) in English, then the same headline and summary in Urdu.
+For each story write a neutral headline (at most 14 words) and a summary of one or two sentences (at most 55 words) in English, then the same headline and summary in Urdu, then in Roman Urdu (Urdu written in Latin letters, the way Pakistanis text, for example "Hukumat ne petrol ki qeemat barqarar rakhi").
 
 Use only facts stated in that story's sources. Do not add background, causes, consequences, predictions, advice or opinion, and nothing you know from elsewhere, even if you are confident it is true. Copy numbers, names and places exactly as the sources give them: in English, spell every name the way an English source spells it, do not turn a place into an adjective (write "Turkiye", not "Turkish"), and leave out any name that appears only in an Urdu source. If the sources disagree, say that reports differ. If the sources are thin, a summary that restates the main headline is fine.
-The Urdu must say exactly what the English says, with no added facts.
+The Urdu and the Roman Urdu must say exactly what the English says, with no added facts. In Roman Urdu use Western digits, write sentence case (capitalise only the first word and names), and spell every name exactly as the English summary does.
 In used_sources, list the ids of the sources your summary relies on."""
 
 SCHEMA = {
@@ -46,9 +46,12 @@ SCHEMA = {
                     "summary_en": {"type": "string"},
                     "headline_ur": {"type": "string"},
                     "summary_ur": {"type": "string"},
+                    "headline_ro": {"type": "string"},
+                    "summary_ro": {"type": "string"},
                     "used_sources": {"type": "array", "items": {"type": "string"}},
                 },
-                "required": ["id", "headline_en", "summary_en", "headline_ur", "summary_ur", "used_sources"],
+                "required": ["id", "headline_en", "summary_en", "headline_ur", "summary_ur", "headline_ro", "summary_ro",
+                             "used_sources"],
                 "additionalProperties": False,
             },
         }
@@ -270,8 +273,12 @@ def summarize(items: list[dict], client=None, cache_path: Path | None = CACHE_PA
 
 
 def _public(out: dict) -> dict:
-    return {
+    pub = {
         "en": {"headline": out["headline_en"].strip(), "text": out["summary_en"].strip()},
         "ur": {"headline": out["headline_ur"].strip(), "text": out["summary_ur"].strip()},
         "used_sources": list(out.get("used_sources") or []),
     }
+    ro_head, ro_text = (out.get("headline_ro") or "").strip(), (out.get("summary_ro") or "").strip()
+    if ro_head and ro_text:  # optional: without it the Roman Urdu reader gets the English text
+        pub["ro"] = {"headline": ro_head, "text": ro_text}
+    return pub

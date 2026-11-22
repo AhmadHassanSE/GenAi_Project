@@ -19,6 +19,8 @@ GOOD = {
     "summary_en": "The federal government kept petrol unchanged for the next fortnight and raised high-speed diesel by Rs3 per litre.",
     "headline_ur": "پیٹرول کی قیمت برقرار، ڈیزل ۳ روپے مہنگا",
     "summary_ur": "حکومت نے پیٹرول کی قیمت برقرار رکھی اور ڈیزل 3 روپے فی لیٹر مہنگا کر دیا۔",
+    "headline_ro": "Petrol ki qeemat barqarar, diesel Rs3 mehnga",
+    "summary_ro": "Hukumat ne agle pandrah din ke liye petrol ki qeemat barqarar rakhi aur high-speed diesel Rs3 fi litre mehnga kar diya.",
     "used_sources": ["a1", "a2"],
 }
 
@@ -33,11 +35,33 @@ def test_grounded_summary_passes():
     ("summary_en", "The IMF welcomed the decision.", "name 'IMF'"),
     ("summary_ur", "ڈیزل ۷ روپے مہنگا ہو گیا۔", "number 7"),
     ("headline_en", "", "headline_en is empty"),
+    ("summary_ro", "Diesel Rs5 mehnga ho gaya.", "number 5 in the Roman Urdu"),
+    ("summary_ro", "Hukumat ne kaha ke IMF ne faisle ka khairmaqdam kiya.", "name 'IMF' in the Roman Urdu"),
+    ("summary_ro", "", "Roman Urdu headline or summary is empty"),
 ])
 def test_unsupported_claims_are_rejected(field, value, expect):
     out = dict(GOOD, **{field: value})
     problems = check(out, SOURCES)
     assert any(expect in p for p in problems), problems
+
+
+def test_roman_urdu_is_optional_and_opening_words_are_not_names():
+    without = {k: v for k, v in GOOD.items() if not k.endswith("_ro")}
+    assert check(without, SOURCES) == []
+    # "Hukumat" opens the sentence, so it is not read as a name; "Govt" inside a sentence is a name and is in the sources
+    out = dict(GOOD, summary_ro="Hukumat ne kaha ke Govt ne petrol ki qeemat barqarar rakhi.")
+    assert check(out, SOURCES) == []
+
+
+def test_roman_urdu_reaches_the_edition_only_when_written():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        data["stories"][0].update(headline_ro="Petrol ki qeemat barqarar", summary_ro="Hukumat ne petrol ki qeemat barqarar rakhi.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:2], client=FakeClient(reply), cache_path=None)
+    assert run.results["s0"]["ro"]["headline"] == "Petrol ki qeemat barqarar"
+    assert "ro" not in run.results["s1"]  # no Roman Urdu written: the page shows English for this story
 
 
 def test_citing_sources_from_another_story_is_rejected():

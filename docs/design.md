@@ -25,9 +25,9 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | `server/subah/embed.py` | Sentence embeddings, multilingual, local | fastembed (ONNX) |
 | `server/subah/group.py` | Average-link clustering, time window, coverage label | numpy |
 | `server/subah/tags.py` | Topic and city tags from English and Urdu keywords; For you tags | regex |
-| `server/subah/rank.py` | Mechanical score and top-ten selection | Python |
-| `server/subah/summarize.py` | Batched, cached summaries in English and Urdu | Groq chat API (OpenAI-compatible, over httpx), model `openai/gpt-oss-120b`, strict JSON schema output with a plain JSON fallback |
-| `server/subah/grounding.py` | Rejects summaries with numbers or names not in the sources | Python |
+| `server/subah/rank.py` | Mechanical score, top-ten selection, topic balance (no section over 3 of 10) | Python |
+| `server/subah/summarize.py` | Batched, cached summaries in English, Urdu and Roman Urdu | Groq chat API (OpenAI-compatible, over httpx), model `openai/gpt-oss-120b`, strict JSON schema output with a plain JSON fallback |
+| `server/subah/grounding.py` | Rejects summaries with numbers or names not in the sources (English, Urdu numbers, Roman Urdu numbers and in-sentence names) | Python |
 | `server/subah/edition.py` | Orchestrates one paper; fallback chain live, snapshot, fixtures | Python |
 | `server/app.py` | API and static files; no-cache headers; one generation at a time | FastAPI, uvicorn |
 | `web/` | Home, onboarding, paper, last page, gift preview, sources page | HTML, CSS, vanilla JS, GSAP on the home page |
@@ -86,10 +86,12 @@ Every `POST` that changes account state must carry the header `X-Subah: 1` (see 
 | Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the event | Plans are not paid for |
 | Email | Gmail API with OAuth; Gmail SMTP with an app password | Gmail SMTP with an app password | No OAuth consent screen to set up; works from the Space | Gmail's daily sending limit; one sender address |
 | Read aloud | Text-to-speech API; browser voices | Browser `speechSynthesis` | Free, no key, works offline | Voice quality varies; many devices have no Urdu voice |
+| Roman Urdu | Rule-based transliteration from Urdu; AI writes it with the other two languages | AI, in the same call, then checked in code | Urdu script drops most vowels, so rules give unreadable Roman Urdu; one call keeps the call budget | No standard spelling, so names are checked only inside sentences; a story without Roman Urdu shows English |
+| Topic balance | None; per-topic quota; cap per section | Cap: no section over 30% of the paper (3 of 10), held-back stories refill a short paper | Keeps one big topic from filling the paper while staying mechanical and published | On a one-topic day a widely reported story can be held back for a less reported one |
 
 ## AI components
 
-- **What AI does:** writes a neutral headline and a one-to-two-sentence summary for each of the ten selected stories, in English and Urdu, using only the headlines and feed descriptions of that story's own reports.
+- **What AI does:** writes a neutral headline and a one-to-two-sentence summary for each of the ten selected stories, in English, Urdu and Roman Urdu, using only the headlines and feed descriptions of that story's own reports.
 - **What code validates:** JSON schema (structured output); every number and capitalised name present in the sources; cited source ids belong to the story; nothing empty.
 - **When AI fails:** no key, rate limit, network error, refusal, cut-off output, invalid JSON, missing story, failed grounding or used-up call budget all lead to the same result for that story: the outlets' own headlines with links. The paper is always produced.
 - **Not AI:** grouping, outlet counts, tags, For you, ranking.

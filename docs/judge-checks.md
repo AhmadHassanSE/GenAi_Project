@@ -21,7 +21,7 @@ Each check from the idea approval, with where to see it and the test that proves
 | Feed metadata and links only, attribution, licensing noted | `feeds.py` never fetches article pages; `/sources.html` and README "Known limitations" |
 | Reader picks (pass, love, keep) | The reader's own choice; no AI. Within loved and kept stories the published formula still sets the order (`pickedStories()` in `common.js`) |
 | Published outlet list, mechanical ranking | `/sources.html`, `GET /api/outlets`, `server/outlets.json`, formula in `rank.py` |
-| Scope: no payments, audio, quiz or third language; English + Urdu + large print; generate-now action | Paper page button "Generate today’s paper now" and `POST /api/generate` |
+| Scope as approved: no payments, audio, quiz or third language; English + Urdu + large print; generate-now action | Paper page button "Generate today’s paper now" and `POST /api/generate`. Payments (prototype), read-aloud and Roman Urdu were added later on the team's request; see "Added after approval" below |
 | Quota: group before AI, summarise only selected stories, keys server-side | `edition.py` order of steps; `SUBAH_AI_BATCH`, `SUBAH_MAX_AI_CALLS`, per-story cache; key read only from server environment; `test_api.py::test_health_has_no_secrets` |
 | Data: event rule on pre-collected data; test profiles only | `SUBAH_SOURCE=live|snapshot|fixtures`; profiles are never stored on the server; test readers A, B and C. Event ruling: **[insert ruling]** |
 
@@ -36,3 +36,5 @@ These were added on the team's request after the approval; the six checks above 
 | Plans: Basic $3, Plus $8 (prototype checkout, no payment) | `/pricing.html`, `GET /api/plans` | `test_plans_are_three_and_eight_dollars`, `test_subscribe_needs_login_then_activates` |
 | Gift paper by email, re-ranked for the recipient with the published formula | `/gift.html` (Send their paper, Preview the email); `server/subah/mailer.py` | `test_gift_is_sent_and_counted`, `test_gift_needs_login_and_plan`, `test_email_is_built_from_checked_text_with_links`, `test_preview_needs_no_account` |
 | Read aloud | Paper page: Listen in the top bar and on each story | Manual check |
+| Roman Urdu, checked like English and Urdu | Paper page: **Roman** in the language switch; setup page: **Roman Urdu**. `grounding.py` checks numbers and in-sentence names in the Roman Urdu | `test_unsupported_claims_are_rejected` (Roman Urdu number, name, empty), `test_roman_urdu_is_optional_and_opening_words_are_not_names`, `test_roman_urdu_reaches_the_edition_only_when_written`, `test_roman_urdu_profile_is_accepted` |
+| Topic balance in the ranking | `/sources.html` (Balance step); `section_cap()` in `rank.py` | `test_one_section_cannot_fill_the_paper`, `test_held_back_stories_fill_the_paper_when_there_is_nothing_else` |

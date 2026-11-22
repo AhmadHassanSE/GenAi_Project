@@ -38,6 +38,17 @@ def test_bad_profile_is_rejected():
     assert r.status_code == 422
 
 
+def test_roman_urdu_profile_is_accepted(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    r = client.post("/api/generate", json={"profile": {"city": "lahore", "lang": "ro"}, "source": "fixtures"})
+    assert r.status_code == 200
+    ed = r.json()
+    assert ed["profile"]["lang"] == "ro" and "ro" in ed["ranking"]
+    st = ed["stories"][0]
+    assert st["coverage"]["ro"].endswith("ne report kiya")
+    assert client.post("/api/generate", json={"profile": {"lang": "fr"}, "source": "fixtures"}).status_code == 422
+
+
 def test_server_files_are_not_served():
     assert client.get("/server/app.py").status_code == 404
     assert client.get("/.env").status_code == 404

@@ -19,15 +19,15 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | FR-01 | Read the feeds on a published outlet list; use only feed metadata (headline, description, link, time) | Must | Done |
 | FR-02 | Group reports of the same event across outlets and across English and Urdu | Must | Done (retuning on real feeds, see testing.md) |
 | FR-03 | Label each story with the count of distinct outlets ("Reported by N outlets") | Must | Done |
-| FR-04 | Rank stories by a published mechanical formula and keep the top ten | Must | Done |
+| FR-04 | Rank stories by a published mechanical formula and keep the top ten | Must | Done; topic balance added after approval (FR-24) |
 | FR-05 | Summarise only the selected stories, only from their source metadata, and link every source | Must | Done |
 | FR-06 | Check every summary against its sources in code; drop it on any unsupported number or name | Must | Done |
 | FR-07 | Show the source headlines with links when the AI is unavailable, fails or is out of quota | Must | Done |
 | FR-08 | Rule-based "For you" tags for the reader's chosen city and topics, showing the matched word | Must | Done |
-| FR-09 | English and Urdu (right to left, Nastaliq), and large print | Must | Done |
+| FR-09 | English and Urdu (right to left, Nastaliq), and large print | Must | Done; Roman Urdu added after approval (FR-23) |
 | FR-10 | "Generate today's paper now" action | Must | Done |
 | FR-11 | Last page with today's top three and their sources | Should | Done |
-| FR-12 | Gift paper preview for a parent: their city, topics, language and print size | Should | Done (preview only, nothing sent) |
+| FR-12 | Gift paper preview for a parent: their city, topics, language and print size | Should | Done; since extended to real sending by email (FR-21) |
 | FR-13 | Publish the outlet list and the ranking formula | Must | Done (`/sources.html`) |
 | FR-14 | Handle malformed, empty and duplicate feed data without crashing | Must | Done |
 | FR-15 | Reader picks stories from today's top 12 on cards (pass, love, keep); the paper shows loved stories first, then kept, each group in formula order | Should | Done |
@@ -38,6 +38,8 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | FR-20 | Two plans: Basic $3 a month (3 gift emails a month) and Plus $8 a month (30 gift emails, 15 stories to pick from, a note on gifts) | Should | Done as a prototype checkout: no payment is taken (added after approval) |
 | FR-21 | Send a gift paper by email through Gmail, re-ranked for the recipient's city and topics, with a preview of the exact email | Should | Done; sending needs a Gmail app password on the server (added after approval) |
 | FR-22 | Save the reader's settings to their account and restore them on another device | Should | Not done: the server endpoint exists, the pages do not use it yet |
+| FR-23 | Roman Urdu as a third reading language: AI-written, grounding-checked Roman Urdu headline and summary per story; English shown, and labelled, for any story without one | Should | Done (added after approval). Gift emails and the last page are still English or Urdu |
+| FR-24 | Topic balance: no section (a story's first topic) fills more than 30% of the paper, rounded up (3 of 10); held-back stories return only if the paper would otherwise be short | Should | Done (added after approval) |
 
 ## Non-functional requirements
 
@@ -70,6 +72,8 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 
 Payments, audio edition, quiz, Roman Urdu, accounts, real delivery by email or WhatsApp, viral-claim labelling, AI judgement of importance, AI predictions about a reader's costs.
 
+(As approved. Accounts, prototype payments, gift email, read-aloud, Roman Urdu and topic balance were later added on the team's request: see Changes after approval.)
+
 ## Changes after approval
 
 Added on the team's request after the idea was approved (2026-11-10). The sections above are kept as approved; where they differ, this section describes the current build.
@@ -78,4 +82,6 @@ Added on the team's request after the idea was approved (2026-11-10). The sectio
 - **Payments (prototype):** a pricing page with Basic ($3 a month) and Plus ($8 a month). Choosing a plan activates it for 30 days; no card is asked for and nothing is charged. A payment provider is needed before launch.
 - **Gift papers by email:** the gift page now sends the recipient's paper through Gmail instead of only previewing it. The recipient's email address is used to send that one message and is kept in the sender's gift log.
 - **Audio:** a read-aloud button uses the browser's built-in voices. No audio files are made and no extra service is used.
-- **Not changed:** the coverage label, the published outlet list, the mechanical ranking, the grounding check and the no-AI fallback work exactly as approved. Paying does not change which stories a reader sees or their order.
+- **Roman Urdu (FR-23):** the third language from the original proposal. The AI writes a Roman Urdu headline and summary in the same call as English and Urdu (no extra calls). Code checks every number in it, and every capitalised name inside a sentence, against the sources; a failed Roman Urdu fails the whole story, as for English and Urdu. A story with no Roman Urdu shows its English text with a note saying so. Interface text on the paper and setup pages is in Roman Urdu; topic and city names stay in English.
+- **Topic balance (FR-24):** from the original proposal's ranking. Still mechanical and published: no section takes more than 3 of 10 places. It changes which stories make the paper on a one-topic day, never the order of those that do.
+- **Not changed:** the coverage label, the published outlet list, the grounding check and the no-AI fallback work exactly as approved; the ranking formula is unchanged apart from the published topic-balance rule. Paying does not change which stories a reader sees or their order.

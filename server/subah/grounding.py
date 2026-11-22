@@ -43,8 +43,27 @@ def _names(text: str) -> list[str]:
     return out
 
 
+def _roman_names(text: str) -> list[str]:
+    """Capitalised words in Roman Urdu that are not at the start of a sentence or headline. Roman Urdu has no
+    fixed spelling, so a capitalised opening word ("Hukumat ne ...") is not treated as a name; inside a sentence
+    only names are capitalised, and those must be spelled as a source spells them."""
+    out = []
+    for m in _WORD.finditer(text or ""):
+        word = m.group(0)
+        if not word[0].isupper() or _SENT_START.search(text[: m.start()]):
+            continue
+        base = re.sub(r"['’]s$", "", word).strip("-'’")
+        if base:
+            out.append(base)
+    return out
+
+
 def check(story_out: dict, sources: list[dict]) -> list[str]:
-    """Return a list of problems; an empty list means the summary passed."""
+    """Return a list of problems; an empty list means the summary passed.
+
+    Roman Urdu (headline_ro, summary_ro) is optional: when it is missing the reader gets the English text.
+    When it is present, every number in it must be in the sources, and every capitalised name inside a
+    sentence must be in the sources too."""
     problems: list[str] = []
     corpus = " ".join(f"{s.get('title', '')} {s.get('description', '')}" for s in sources)
     corpus_fold = " " + fold(corpus) + " "
@@ -63,6 +82,18 @@ def check(story_out: dict, sources: list[dict]) -> list[str]:
     for name in _names(english) + _names(urdu):
         if f" {fold(name)} " not in corpus_fold:
             problems.append(f"name '{name}' is not in the sources")
+
+    ro_head, ro_text = (story_out.get("headline_ro") or "").strip(), (story_out.get("summary_ro") or "").strip()
+    if ro_head or ro_text:
+        if not (ro_head and ro_text):
+            problems.append("Roman Urdu headline or summary is empty")
+        roman = f"{ro_head}. {ro_text}"
+        for n in sorted(_numbers(roman)):
+            if n not in corpus_nums:
+                problems.append(f"number {n} in the Roman Urdu is not in the sources")
+        for name in _roman_names(roman):
+            if f" {fold(name)} " not in corpus_fold:
+                problems.append(f"name '{name}' in the Roman Urdu is not in the sources")
 
     used = story_out.get("used_sources") or []
     if not used:

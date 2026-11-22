@@ -24,8 +24,9 @@ or, with the virtual environment active, `python -m pytest server/tests -q`. The
 | Unit / integration added later: summary retry and the outlet's-own-words fallback (`test_summaries.py`) | 2 | 2 | 0 |
 | Unit / integration added later: accounts, plans, gift email (`test_accounts.py`) | 13 | 13 | 0 |
 | End-to-end / manual added later (browser): pricing, sign up, checkout, account page, gift preview, send without Gmail, phone width | 3 pages | 3 | 0 |
+| Unit / integration added later: Roman Urdu and topic balance (`test_summaries.py`, `test_api.py`, `test_foryou.py`) | 10 | 10 | 0 |
 
-Total automated tests now: 66, all passing.
+Total automated tests now: 76, all passing.
 
 ## Edge cases covered
 
@@ -58,6 +59,11 @@ Total automated tests now: 66, all passing.
 | EC-25 | Gmail not configured | 503 with the reason, nothing sent | `test_gift_without_gmail_says_so`; browser check | Pass |
 | EC-26 | HTML in the sender's note | Escaped in the email | `test_email_is_built_from_checked_text_with_links` | Pass |
 | EC-27 | MongoDB rejects the login, or cannot be reached | `/api/health` names the problem; account calls answer 503 | Connection test and `/api/health`, by hand | Pass |
+| EC-28 | Roman Urdu adds a number or an in-sentence name not in the sources, or is half empty | Story falls back like any failed summary | `test_unsupported_claims_are_rejected` | Pass |
+| EC-29 | AI writes no Roman Urdu for a story | English text shown, labelled; other languages unaffected | `test_roman_urdu_reaches_the_edition_only_when_written` | Pass |
+| EC-30 | Six cricket stories outscore everything else | Only 3 make the paper; order still by score | `test_one_section_cannot_fill_the_paper` | Pass |
+| EC-31 | Too few other stories to fill the paper | Held-back stories return, still by score | `test_held_back_stories_fill_the_paper_when_there_is_nothing_else` | Pass |
+| EC-32 | Unknown language code | HTTP 422 | `test_roman_urdu_profile_is_accepted` | Pass |
 
 ## Measured metrics
 
@@ -90,7 +96,8 @@ Total automated tests now: 66, all passing.
 
 ## Known untested areas
 
-- Urdu wording of AI summaries: needs a review by an Urdu speaker.
+- Urdu and Roman Urdu wording of AI summaries: needs a review by an Urdu speaker (the proposal's 1-to-5 native-speaker rating has not been run yet).
+- Roman Urdu with the real model: covered by tests with a fake AI; a live paper needs a run with `GROQ_API_KEY`.
 - Grouping on several real days: tuned on one day of feeds plus the fixed set.
 - Screen readers: keyboard and focus were checked by hand; no screen-reader pass yet.
 - Gift email through real Gmail: tested with a fake sender; a real send needs the Gmail app password on the server.

@@ -21,6 +21,7 @@ Required by the event rules. Log every meaningful use of AI tools during the bui
 | 2026-11-10 | (fill in) | Claude Code | Never show "no summary"; close source lists by default; add read-aloud | Accepted: one retry with the rejection reasons, then the outlet's own words; browser voices for audio | 2 new tests; live paper checked: 7 summaries, 3 credited quotes, no "no summary" text |
 | 2026-11-10 | (fill in) | Claude Code | Add accounts, $3 and $8 plans, and gift papers by Gmail | Accepted; checkout kept as a prototype with no payment; sending through a Gmail app password | 13 new tests; sign-up, checkout and gift page checked in the browser with test accounts |
 | 2026-11-10 | (fill in) | Claude Code | Fix the MongoDB connection | The first database login was rejected; a second database user worked and was set as a Space secret | Connection test; a test account written, read back and deleted; live `/api/health` reports MongoDB connected |
+| 2026-11-22 | (fill in) | Claude Code | Check the build against the project proposal; add Roman Urdu and topic balance; fix doc placeholders | Accepted; Roman Urdu written by the AI in the same call and checked in code; topic cap kept mechanical and published | 10 new tests; full suite (76 passing) |
 
 ## Reflection
 

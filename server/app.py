@@ -68,7 +68,7 @@ async def no_stale_pages(request, call_next):
 class Profile(BaseModel):
     city: str | None = None
     topics: list[str] = Field(default_factory=list, max_length=5)
-    lang: Literal["en", "ur"] = "en"
+    lang: Literal["en", "ur", "ro"] = "en"
 
 
 class GenerateRequest(BaseModel):

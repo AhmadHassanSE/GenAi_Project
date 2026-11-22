@@ -69,6 +69,35 @@ def test_ranking_formula_is_mechanical():
     assert total == 4
 
 
+def _topical(i, title, outlets):
+    arts = [Article(id=f"a{i}-{k}", outlet_id=f"o{k}", outlet_name=f"O{k}", feed_url="", lang="en", title=title,
+                    summary="", link=f"https://example.com/{i}/{k}", published=T) for k in range(outlets)]
+    s = Story(id=f"s{i:02d}", articles=arts)
+    tag_story(s)
+    return s
+
+
+def test_one_section_cannot_fill_the_paper():
+    cricket = [_topical(i, f"Cricket: PCB names squad, day {i}", 6) for i in range(6)]
+    other = [_topical(10 + i, title, 1) for i, title in enumerate(
+        ["Dengue cases fall in hospitals", "Senate passes bill", "Rupee steady as reserves rise", "Smog warning issued",
+         "Freelancers report payment delays", "School exams postponed", "Petrol prices unchanged"])]
+    picked = rank(cricket + other, {"city": None, "topics": []}, limit=10)
+    sections = [p["section"] for p in picked]
+    assert sections.count("cricket") == 3  # 30% of 10, though six cricket stories outscore everything else
+    assert [p["rank"] for p in picked] == list(range(1, 11))
+    scores = [p["score"] for p in picked]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_held_back_stories_fill_the_paper_when_there_is_nothing_else():
+    cricket = [_topical(i, f"Cricket: PCB names squad, day {i}", 6 - i % 3) for i in range(6)]
+    picked = rank(cricket + [_topical(20, "Senate passes bill", 1)], {"city": None, "topics": []}, limit=10)
+    assert len(picked) == 7  # all of them: the cap never leaves the paper short
+    scores = [p["score"] for p in picked]
+    assert scores == sorted(scores, reverse=True)
+
+
 def test_rank_orders_by_score_then_recency(collection, embedder):
     from server.subah.group import group_articles
 

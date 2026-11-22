@@ -184,6 +184,7 @@
   function paperTitle(name, lang) {
     const n = cleanName(name);
     if (lang === "ur") return (n ? urduName(n) : "آپ") + " کی صبح";
+    if (lang === "ro") return (n || "Aap") + " ki Subah";
     return n ? (/s$/i.test(n) ? n + "’" : n + "’s") + " Subah" : "Your Subah";
   }
 
@@ -196,6 +197,7 @@
   const dates = {
     en: (d) => fmt("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }, d),
     ur: (d) => fmt("ur-PK-u-nu-arabext", { weekday: "long", day: "numeric", month: "long", year: "numeric" }, d),
+    ro: (d) => fmt("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }, d),
     time: (d, lang) => fmt(lang === "ur" ? "ur-PK-u-nu-arabext" : "en-GB", { hour: "numeric", minute: "2-digit", hour12: true }, d),
     hijriEn: (d) => fmt("en-GB-u-ca-islamic-umalqura", { day: "numeric", month: "long", year: "numeric" }, d),
     hijriUr: (d) => fmt("ur-PK-u-ca-islamic-umalqura-nu-arabext", { day: "numeric", month: "long", year: "numeric" }, d)
@@ -207,6 +209,11 @@
       if (mins < 60) return `${toUrduDigits(mins)} منٹ پہلے`;
       const h = Math.round(mins / 60);
       return h < 48 ? `${toUrduDigits(h)} گھنٹے پہلے` : `${toUrduDigits(Math.round(h / 24))} دن پہلے`;
+    }
+    if (lang === "ro") {
+      if (mins < 60) return `${mins} minute pehle`;
+      const h = Math.round(mins / 60);
+      return h < 48 ? `${h} ghante pehle` : `${Math.round(h / 24)} din pehle`;
     }
     if (mins < 60) return `${mins} min ago`;
     const h = Math.round(mins / 60);
@@ -244,17 +251,17 @@
   function coverageHTML(story, lang, opts) {
     opts = opts || {};
     const n = story.outlet_count;
-    const label = (story.coverage && story.coverage[lang]) || (lang === "ur" ? `${toUrduDigits(n)} اداروں نے رپورٹ کیا` : `Reported by ${n} outlet${n === 1 ? "" : "s"}`);
+    const label = (story.coverage && story.coverage[lang]) || (lang === "ur" ? `${toUrduDigits(n)} اداروں نے رپورٹ کیا` : lang === "ro" ? `${n} ${n === 1 ? "idare" : "idaron"} ne report kiya` : `Reported by ${n} outlet${n === 1 ? "" : "s"}`);
     const dots = opts.dots === false ? "" : `<span class="badge__dots" aria-hidden="true">${"<i></i>".repeat(Math.min(n, 9))}</span>`;
     return `<span class="badge badge--coverage"${lang === "ur" ? ' lang="ur"' : ""}><span class="badge__icon">${ICONS.stack}</span>${esc(label)}${dots}</span>`;
   }
   /* "For you" tags: shown only when the story matched the reader's own city or topics, with the word that matched. */
   function forYouHTML(tags, lang) {
     if (!tags || !tags.length) return "";
-    const head = lang === "ur" ? "آپ کے لیے" : "For you";
+    const head = lang === "ur" ? "آپ کے لیے" : lang === "ro" ? "Aap ke liye" : "For you";
     const chips = tags.map((t) => {
       const label = lang === "ur" ? t.label_ur : t.label_en;
-      const why = lang === "ur" ? `’${t.term}‘ کی بنیاد پر` : `matched “${t.term}”`;
+      const why = lang === "ur" ? `’${t.term}‘ کی بنیاد پر` : lang === "ro" ? `“${t.term}” ki buniyad par` : `matched “${t.term}”`;
       return `<span class="fy-tag fy-tag--${t.type}" title="${esc(why)}">${t.type === "city" ? ICONS.pin : ICONS.tag}<span>${esc(label)}</span><span class="fy-tag__why">${esc(why)}</span></span>`;
     }).join("");
     return `<div class="fy"${lang === "ur" ? ' lang="ur"' : ""}><span class="fy__head">${head}</span>${chips}</div>`;
@@ -302,7 +309,7 @@
   }
 
   function headlineOf(story, lang) {
-    if (story.summary) return story.summary[lang].headline;
+    if (story.summary) return (story.summary[lang] || story.summary.en).headline;
     return story.headline[lang] || story.headline.en;
   }
 

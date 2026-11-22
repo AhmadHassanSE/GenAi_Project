@@ -34,6 +34,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | `server/subah/accounts.py` | Sign up, log in, sessions, plans, gift log; MongoDB or in-memory store | pymongo, hashlib.scrypt |
 | `server/subah/mailer.py` | Builds the recipient's gift paper from today's edition and sends it through Gmail | smtplib (SMTP over SSL) |
 | `server/subah/scheduler.py` | The morning run: prints the paper at 06:30 and emails it at 07:00 to readers who asked, once a day | Python thread inside the web server |
+| `server/subah/closing.py` | Takeaways and quiz for the last page: one AI call from the checked summaries, checked against the sources; questions built in code fill any gap | Groq (same client), Python |
 | `web/account.html`, `web/pricing.html` | Log in and sign up, account page, plans and prototype checkout | HTML, CSS, vanilla JS |
 
 ## Data model
@@ -97,6 +98,7 @@ Every `POST` that changes account state must carry the header `X-Subah: 1` (see 
 - **What AI does:** writes a neutral headline and a one-to-two-sentence summary for each of the ten selected stories, in English, Urdu and Roman Urdu, using only the headlines and feed descriptions of that story's own reports.
 - **What code validates:** JSON schema (structured output); every number and capitalised name present in the sources; cited source ids belong to the story; nothing empty.
 - **When AI fails:** no key, rate limit, network error, refusal, cut-off output, invalid JSON, missing story, failed grounding or used-up call budget all lead to the same result for that story: the outlets' own headlines with links. The paper is always produced.
+- **Also AI (last page):** three takeaways and three quiz questions from the checked summaries, in one more call. Code checks each takeaway, and each question with its correct answer, against that story's sources; drops a question if a wrong option uses only facts from the sources (it could be true); turns the options so the answer is not always first. Without the AI, the quiz is built in code from the paper's outlet counts.
 - **Not AI:** grouping, outlet counts, tags, For you, ranking.
 
 ## Security and privacy

@@ -116,12 +116,16 @@ class GroqClient:
 
     URL = "https://api.groq.com/openai/v1/chat/completions"
 
-    def __init__(self, model: str | None = None):
+    def __init__(self, model: str | None = None, system: str | None = None, schema: dict | None = None,
+                 schema_name: str = "subah_summaries", max_output: int | None = None):
+        """system, schema and max_output default to the summaries'; closing.py passes its own."""
         import httpx
 
         self._httpx = httpx
         self.model = model or MODEL
         self.key = os.environ["GROQ_API_KEY"]
+        self.system, self.schema, self.schema_name = system or SYSTEM, schema or SCHEMA, schema_name
+        self.max_output = max_output
 
     def _body(self, payload: str, structured: bool) -> dict:
         try:
@@ -131,16 +135,16 @@ class GroqClient:
         body = {
             "model": self.model,
             "temperature": 0.2,
-            "max_completion_tokens": output_budget(n),
+            "max_completion_tokens": self.max_output or output_budget(n),
             "messages": [
-                {"role": "system", "content": SYSTEM},
+                {"role": "system", "content": self.system},
                 {"role": "user", "content": payload},
             ],
         }
         if self.model.startswith("openai/gpt-oss"):
             body["reasoning_effort"] = "low"
         if structured:
-            body["response_format"] = {"type": "json_schema", "json_schema": {"name": "subah_summaries", "schema": SCHEMA, "strict": True}}
+            body["response_format"] = {"type": "json_schema", "json_schema": {"name": self.schema_name, "schema": self.schema, "strict": True}}
         else:
             body["response_format"] = {"type": "json_object"}
         return body

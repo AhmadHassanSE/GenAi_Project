@@ -12,6 +12,7 @@ from . import feeds
 from .embed import embedder_status, get_embedder
 from .group import coverage_label, group_articles
 from .rank import FORMULA, rank
+from . import closing
 from .summarize import summarize
 from .tags import CITIES, TOPICS, tag_story
 
@@ -128,7 +129,8 @@ def collect(source: str, outlets: list[dict], progress=None) -> feeds.Collection
 
 
 def build_edition(profile: dict | None, source: str = "fixtures", client=None, collection: feeds.Collection | None = None,
-                  cache_path: Path | None | str = "default", pool: int | None = None, progress=None) -> dict:
+                  cache_path: Path | None | str = "default", pool: int | None = None, progress=None,
+                  closing_client=None) -> dict:
     """pool: how many top stories to return; the reader can then keep, love or pass on each one.
     progress(event): optional callback for live progress (feeds answering, grouping, ranking, summaries)."""
     emit = progress or (lambda event: None)
@@ -185,6 +187,11 @@ def build_edition(profile: dict | None, source: str = "fixtures", client=None, c
             "sources": [a.to_source() for a in s.articles],
         })
 
+    # last page: takeaways and quiz (one more AI call when the summaries came from the real AI)
+    end = closing.build(out_stories, {it["id"]: it["sources"] for it in items}, client=closing_client,
+                        use_ai=client is None or closing_client is not None)
+    emit({"type": "closing", "source": end["source"]})
+
     report = col.summary()
     edition = {
         "edition_id": f"{col.as_of.strftime('%Y%m%d%H%M')}-{len(out_stories)}",
@@ -208,7 +215,8 @@ def build_edition(profile: dict | None, source: str = "fixtures", client=None, c
                 "total": round((time.perf_counter() - t0) * 1000),
             },
         },
-        "ai": run.stats(),
+        "ai": dict(run.stats(), closing_calls=end.pop("calls"), closing_note=end.pop("note")),
+        "closing": end,
         "grouping": embedder_status(),
         "report": report,
     }

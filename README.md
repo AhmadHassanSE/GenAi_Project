@@ -25,7 +25,7 @@ People in Pakistan, and their families abroad, see the same story many times acr
 1. Open the live URL. Scroll the front page: the clustering scene and "Then we pick ten" show how grouping and ranking work.
 2. Click **Make my paper**, choose **Test reader A**, then **Next: topics**, then **Generate today's paper**.
 3. On the paper: each story shows **Reported by N outlets**, its sources with links, **For you** tags with the word that matched, and why it is here. Switch to **اردو**, **Roman** (Roman Urdu) and **large print** in the top bar. **Generate today's paper now** rebuilds it.
-4. Open **Our sources** to see the outlet list and the ranking formula, and **Finish today's paper** for the last page.
+4. Open **Our sources** to see the outlet list and the ranking formula, and **Finish today's paper** for the last page: takeaways and a three-question quiz.
 5. Open **Pricing**, choose **Plus** and sign up with a test email. Checkout is a prototype: nothing is charged. Then on **For family**, enter a recipient email you own and **Send their paper**, or **Preview the email** without sending.
 
 ## Test accounts
@@ -81,7 +81,7 @@ Useful tools: `python -m server.tools.check_feeds` checks every feed; `python -m
 bash scripts/test.sh
 ```
 
-91 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
+98 tests. See [docs/testing.md](docs/testing.md) and [docs/evaluation-checks.md](docs/evaluation-checks.md).
 
 ## Deploy (free, Hugging Face Spaces)
 
@@ -127,7 +127,7 @@ How each item in the project proposal ended up. "Changed in MVP scope" means we 
 | "You're done for today" | Built | `/end.html` |
 | Phase 2: audio | Built with the browser's own voices | Paper page, Listen |
 | Phase 2: gift papers | Built: $3 and $8 plans (prototype checkout, no payment) and gift email | `/pricing.html`, `/gift.html` |
-| Phase 2: three takeaways and a quiz | Partly: the last page repeats the top three; no quiz | `/end.html` |
+| Phase 2: three takeaways and a quiz | Built: AI-written from the checked summaries and checked against the sources; without the AI, a quiz built from the paper's outlet counts | `closing.py`, `/end.html` |
 | Phase 2: team briefs | Not built | |
 | Evaluation: 200 hand-labelled pairs, 100-summary audit, native-speaker rating, 30 to 50-user pilot | Tooling built, labelling to do: `server/tools/evaluate.py` made a 200-pair sheet from the real feeds (`eval/pairs.csv`) and the summary audit sheet (`eval/audit.csv`, 7 of 100 so far); both need people to fill them in. Also 528 labelled pairs on the synthetic fixed set. Pilot not yet run | [docs/testing.md](docs/testing.md), `eval/` |
 

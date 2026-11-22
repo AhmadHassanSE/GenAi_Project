@@ -1,6 +1,6 @@
 {
  "edition_id": "202611100200-10",
- "generated_at": "2026-11-22T16:39:56.893000+00:00",
+ "generated_at": "2026-11-22T17:14:47.163679+00:00",
  "as_of": "2026-11-10T02:00:00+00:00",
  "source": "fixtures",
  "profile": {
@@ -978,10 +978,10 @@
   "feeds_ok": 16,
   "feeds_failed": 4,
   "timings_ms": {
-   "collect": 53,
-   "group_and_tag": 6471,
+   "collect": 46,
+   "group_and_tag": 5494,
    "summaries": 0,
-   "total": 6524
+   "total": 5542
   }
  },
  "ai": {
@@ -991,9 +991,99 @@
   "call_budget": 3,
   "cache_hits": 0,
   "retried": 0,
+  "roman_dropped": 0,
   "summarised": 0,
   "fallback": 10,
-  "note": "AI turned off (SUBAH_AI=off)"
+  "note": "AI turned off (SUBAH_AI=off)",
+  "closing_calls": 0,
+  "closing_note": ""
+ },
+ "closing": {
+  "takeaways": [],
+  "quiz": [
+   {
+    "story": "se86e949a0b",
+    "answer": 0,
+    "source": "rules",
+    "question": {
+     "en": "How many outlets reported this story? “Lahore schools to hold online classes on Mondays as smog worsens”",
+     "ur": "یہ خبر کتنے اداروں نے رپورٹ کی؟ ’سموگ کے باعث لاہور کے اسکولوں میں پیر کو آن لائن تدریس‘",
+     "ro": "Yeh khabar kitne idaron ne report ki? “Lahore schools to hold online classes on Mondays as smog worsens”"
+    },
+    "options": {
+     "en": [
+      "4",
+      "6",
+      "8"
+     ],
+     "ur": [
+      "۴",
+      "۶",
+      "۸"
+     ],
+     "ro": [
+      "4",
+      "6",
+      "8"
+     ]
+    }
+   },
+   {
+    "story": "se20185ace9",
+    "answer": 0,
+    "source": "rules",
+    "question": {
+     "en": "How many outlets reported this story? “Govt keeps petrol price unchanged, raises diesel by Rs3 per litre”",
+     "ur": "یہ خبر کتنے اداروں نے رپورٹ کی؟ ’پیٹرول کی قیمت برقرار، ڈیزل 3 روپے مہنگا‘",
+     "ro": "Yeh khabar kitne idaron ne report ki? “Govt keeps petrol price unchanged, raises diesel by Rs3 per litre”"
+    },
+    "options": {
+     "en": [
+      "5",
+      "7",
+      "9"
+     ],
+     "ur": [
+      "۵",
+      "۷",
+      "۹"
+     ],
+     "ro": [
+      "5",
+      "7",
+      "9"
+     ]
+    }
+   },
+   {
+    "story": "sa6a472c0c0",
+    "answer": 0,
+    "source": "rules",
+    "question": {
+     "en": "How many outlets reported this story? “Three uncapped players named in Pakistan Test squad”",
+     "ur": "یہ خبر کتنے اداروں نے رپورٹ کی؟ ’ٹیسٹ سیریز کے لیے قومی اسکواڈ کا اعلان، تین نئے کھلاڑی شامل‘",
+     "ro": "Yeh khabar kitne idaron ne report ki? “Three uncapped players named in Pakistan Test squad”"
+    },
+    "options": {
+     "en": [
+      "4",
+      "6",
+      "8"
+     ],
+     "ur": [
+      "۴",
+      "۶",
+      "۸"
+     ],
+     "ro": [
+      "4",
+      "6",
+      "8"
+     ]
+    }
+   }
+  ],
+  "source": "rules"
  },
  "grouping": {
   "name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",

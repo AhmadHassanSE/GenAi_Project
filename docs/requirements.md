@@ -41,6 +41,7 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | FR-23 | Roman Urdu as a third reading language: AI-written, grounding-checked Roman Urdu headline and summary per story; English shown, and labelled, for any story without one | Should | Done (added after the first MVP): paper, setup page, last page, gift page and gift email |
 | FR-24 | Topic balance: no section (a story's first topic) fills more than 30% of the paper, rounded up (3 of 10); held-back stories return only if the paper would otherwise be short | Should | Done (added after the first MVP) |
 | FR-25 | The paper is printed every morning (06:30 Lahore time) and emailed at 07:00 to readers who turn on "Email me my paper" on their account, ranked for their saved settings, in their language and print size; never twice a day | Should | Done (added after the first MVP); needs the server awake and Gmail set up |
+| FR-26 | Last page: three takeaways and a three-question quiz from the checked summaries. AI text is checked against each story's sources; a question whose wrong option could also be true is dropped; questions built in code from the paper's own outlet counts fill any gap, so there is always a quiz | Should | Done (added after the first MVP) |
 
 ## Non-functional requirements
 
@@ -49,7 +50,7 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | NFR-01 | Accuracy | Pairwise grouping errors on the fixed set | 0 | `test_grouping.py` | See testing.md |
 | NFR-02 | Honesty | Summaries with a claim not in the sources reaching the reader | 0 | grounding check plus `test_summaries.py` | 0 in tests |
 | NFR-03 | Availability | Paper generated when the AI fails | 100% | `test_paper_generates_*` | 100% in tests |
-| NFR-04 | Cost | AI calls per paper | at most 3 | `edition.ai.calls`, `SUBAH_MAX_AI_CALLS` | 2 for 10 stories (batches of 5); 0 on cache hits |
+| NFR-04 | Cost | AI calls per paper | at most 3 for summaries, plus 1 for the last page | `edition.ai.calls`, `edition.ai.closing_calls`, `SUBAH_MAX_AI_CALLS` | 2 to 3 for 10 stories, plus 1; 0 on cache hits |
 | NFR-05 | Speed | Generate-now time from live feeds | under 30 s | `edition.stats.timings_ms` | See testing.md |
 | NFR-06 | Security | No secret in the repository or in any API response | none | `.gitignore`, `test_health_has_no_secrets` | Pass |
 | NFR-07 | Accessibility | Keyboard use, visible focus, reduced motion respected | all pages | manual check | Pass on manual check |

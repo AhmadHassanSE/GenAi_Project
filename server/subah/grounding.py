@@ -20,6 +20,8 @@ COMMON = {
     "we", "in", "on", "at", "after", "before", "but", "and", "or", "as", "for", "from", "with", "while", "under",
     "reports", "report", "officials", "official", "authorities", "outlets", "sources", "according", "meanwhile",
     "separately", "also", "both", "some", "several", "one", "two", "three", "there", "no", "not", "new", "if",
+    # question words, for the quiz on the last page
+    "how", "what", "which", "who", "whom", "whose", "where", "when", "why", "many", "much", "did", "does", "do", "is", "was",
 }
 
 

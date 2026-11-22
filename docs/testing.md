@@ -27,8 +27,9 @@ or, with the virtual environment active, `python -m pytest server/tests -q`. The
 | Unit / integration added later: Roman Urdu and topic balance (`test_summaries.py`, `test_api.py`, `test_foryou.py`) | 10 | 10 | 0 |
 | Unit / integration added later: Roman Urdu email, settings on the account, feed cap, evaluation sheets, request sizing, Roman Urdu that is English or fails the check (`test_accounts.py`, `test_feeds.py`, `test_evaluate.py`, `test_summaries.py`) | 9 | 9 | 0 |
 | Unit / integration added later: morning print and email, opt-in switch (`test_morning.py`) | 6 | 6 | 0 |
+| Unit / integration added later: takeaways and quiz (`test_closing.py`) | 7 | 7 | 0 |
 
-Total automated tests now: 91, all passing.
+Total automated tests now: 98, all passing.
 
 ## Edge cases covered
 
@@ -70,6 +71,8 @@ Total automated tests now: 91, all passing.
 | EC-34 | Server wakes at 09:15, or at 13:00 | Catches up and sends; after 11:00 skips the day | `test_late_start_catches_up_then_gives_up` | Pass |
 | EC-35 | Gmail not set up at 07:00 | Nothing sent; the reason is recorded | `test_without_gmail_nothing_is_sent_and_it_says_why` | Pass |
 | EC-36 | Feeds fail at 06:30 | Waits 10 minutes, then tries again | `test_a_failed_print_waits_before_trying_again` | Pass |
+| EC-37 | Quiz answer not in the sources, two options the same, answer index out of range, or a wrong option that the sources also support | Question dropped; a question built in code takes its place | `test_questions_are_rejected_when_wrong_or_ambiguous`, `test_ai_closing_page_mixes_checked_ai_questions_and_rules` | Pass |
+| EC-38 | Last-page AI call fails | Quiz built in code; no takeaways; note recorded | `test_closing_ai_failure_still_gives_a_quiz` | Pass |
 
 ## Measured metrics
 
@@ -88,6 +91,7 @@ Total automated tests now: 91, all passing.
 | Model choice | Same 10 real stories, grounding check pass rate | openai/gpt-oss-120b: 7 of 10, then 9 of 10 after a prompt fix on name spelling, about 8 s; qwen/qwen3.8-27b: could not run a full paper, its free-tier limit is 8,000 tokens a minute |
 | Real AI run on the larger outlet list (2026-11-22) | One paper from the live snapshot, `openai/gpt-oss-120b` on Groq's free tier | First try: every call refused (HTTP 413). The free tier allows 8,000 tokens per request, counting the reserved output, and 20-outlet stories are larger. Fixed by sending at most 6 sources per story (one per outlet first, descriptions cut to 240 characters), sizing batches from a token estimate and reserving output per story. Then: 7 of 10 stories summarised in 3 calls; 2 left out by the model, 1 failed the source check |
 | Roman Urdu with the real model | Same run, read by hand | First prompt: the model copied English into the Roman Urdu fields, and the source check passed it. Now English is detected in code and only the Roman Urdu is dropped. With the example in the prompt, 4 of 7 summaries had real Roman Urdu (for example "Lahore dobara aalmi aloodgi ki fehrist mein sar farisht, AQI 500 se zyada"); one headline was half English. Quality to be rated by a native speaker on `eval/audit.csv` |
+| Takeaways and quiz with the real model | Same day, read by hand | First try failed: the request with every source was refused; now only the checked summaries are sent. Then 2 of 3 takeaways and 3 of 3 questions passed the checks (for example "At what age did Hussain Naqi pass away?" 88 / 78 / 68). The model always put the answer first, so the code now turns the options. Its Roman Urdu was all dropped by the checks, so that page showed English |
 | Grounding check on real AI output | Rejections read by hand | All rejections were real: names written in a spelling no source used ("Turkish" for "Turkiye"; English spellings of names found only in Urdu sources) |
 
 ## Defect log

@@ -22,6 +22,7 @@ A record of every meaningful use of AI tools while building the project.
 | 2026-11-10 | (fill in) | Claude Code | Add accounts, $3 and $8 plans, and gift papers by Gmail | Accepted; checkout kept as a prototype with no payment; sending through a Gmail app password | 13 new tests; sign-up, checkout and gift page checked in the browser with test accounts |
 | 2026-11-10 | (fill in) | Claude Code | Fix the MongoDB connection | The first database login was rejected; a second database user worked and was set as a Space secret | Connection test; a test account written, read back and deleted; live `/api/health` reports MongoDB connected |
 | 2026-11-22 | (fill in) | Claude Code | Check the build against the project proposal; add Roman Urdu and topic balance; fix doc placeholders | Accepted; Roman Urdu written by the AI in the same call and checked in code; topic cap kept mechanical and published | 10 new tests; full suite (76 passing) |
+| 2026-11-22 | (fill in) | Claude Code | Remove hackathon framing; Roman Urdu on every page; settings on the account; more outlets; evaluation sheets; morning email; takeaways and quiz | Accepted. A real AI run found three problems the fake-AI tests could not: requests over the free tier's 8,000-token limit, English copied into the Roman Urdu fields, and quiz answers always first. All three fixed in code, not by trusting the prompt | 98 automated tests; live feed run read by hand; real AI paper read by hand |
 
 ## Reflection
 

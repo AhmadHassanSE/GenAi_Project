@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     $$('input[name="large"]').forEach((r) => { r.checked = (r.value === "1") === !!p.large; });
     paintTopics(p.topics || []);
   }
+  /* settings restored from the reader's account after this page loaded */
+  document.addEventListener("subah:profile", (e) => { profile = e.detail; fill(profile); });
   $("#presets").innerHTML = S.TEST_READERS.map((r, i) => {
     const city = catalog.cities.find((c) => c.id === r.city);
     return `<button class="preset" type="button" data-i="${i}"><b>${S.esc(r.label)}</b><span>${S.esc(city ? city.en : r.city)}, ${r.lang === "ur" ? "Urdu" : r.lang === "ro" ? "Roman Urdu" : "English"}${r.large ? ", large print" : ""}</span></button>`;

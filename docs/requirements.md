@@ -37,7 +37,7 @@ Subah is a morning paper for one reader: the day's top stories, grouped across P
 | FR-19 | Sign up, log in and log out | Should | Done (added after the first MVP) |
 | FR-20 | Two plans: Basic $3 a month (3 gift emails a month) and Plus $8 a month (30 gift emails, 15 stories to pick from, a note on gifts) | Should | Done as a prototype checkout: no payment is taken (added after the first MVP) |
 | FR-21 | Send a gift paper by email through Gmail, re-ranked for the recipient's city and topics, with a preview of the exact email | Should | Done; sending needs a Gmail app password on the server (added after the first MVP) |
-| FR-22 | Save the reader's settings to their account and restore them on another device | Should | Not done: the server endpoint exists, the pages do not use it yet |
+| FR-22 | Save the reader's settings to their account and restore them on another device | Should | Done: saved on every change while logged in; restored on log-in or on a new device |
 | FR-23 | Roman Urdu as a third reading language: AI-written, grounding-checked Roman Urdu headline and summary per story; English shown, and labelled, for any story without one | Should | Done (added after the first MVP): paper, setup page, last page, gift page and gift email |
 | FR-24 | Topic balance: no section (a story's first topic) fills more than 30% of the paper, rounded up (3 of 10); held-back stories return only if the paper would otherwise be short | Should | Done (added after the first MVP) |
 

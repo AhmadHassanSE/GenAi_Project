@@ -34,7 +34,7 @@ Building the whole pipeline and its tests quickly, and writing synthetic English
 - The first grouping threshold was tuned only on synthetic fixtures and over-merged real news. A live run caught it.
 - A first Urdu keyword list included "چینی", which means both sugar and Chinese.
 - An automated CSS cleanup broke a stylesheet; a browser check caught it.
-- The Basic plan's feature list promised settings saved to the account before the pages used that feature; caught on review and listed as open (FR-22).
+- The Basic plan's feature list promised settings saved to the account before the pages used that feature; caught on review, listed as open, and later built (FR-22).
 - A first script that waited for the Space to restart stopped too early, because the status text it matched also appeared in another field; checking the live health endpoint instead fixed it.
 
 ### What we did not delegate to AI

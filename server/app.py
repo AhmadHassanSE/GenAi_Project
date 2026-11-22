@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .subah import accounts, feeds, mailer
-from .subah.edition import ProfileError, build_edition, load_latest, save_latest
+from .subah.edition import ProfileError, build_edition, clean_profile, load_latest, save_latest
 from .subah.embed import embedder_status
 from .subah.rank import FORMULA
 from .subah.summarize import ai_configured
@@ -69,6 +69,12 @@ class Profile(BaseModel):
     city: str | None = None
     topics: list[str] = Field(default_factory=list, max_length=5)
     lang: Literal["en", "ur", "ro"] = "en"
+
+
+class SavedProfile(Profile):
+    """Reader settings kept with an account, so another device can restore them."""
+    name: str = Field("", max_length=24)
+    large: bool = False
 
 
 class GenerateRequest(BaseModel):
@@ -280,9 +286,14 @@ def subscribe_cancel(request: Request) -> dict:
 
 
 @app.post("/api/profile")
-def profile_save(body: Profile, request: Request) -> dict:
+def profile_save(body: SavedProfile, request: Request) -> dict:
     _same_site_only(request)
-    user = _account_call(accounts.save_profile, _user(request), body.model_dump())
+    try:
+        clean = clean_profile(body.model_dump())
+    except ProfileError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    profile = {**clean, "name": body.name.replace("<", "").replace(">", "").strip(), "large": body.large}
+    user = _account_call(accounts.save_profile, _user(request), profile)
     return {"user": _account_call(accounts.public_user, user)}
 
 

@@ -44,6 +44,21 @@ def test_signup_sets_a_session_cookie_and_me_works(client):
     assert client.get("/api/auth/me").json()["user"]["name"] == "Test A"
 
 
+def test_settings_are_saved_to_the_account_and_restored(client):
+    profile = {"city": "karachi", "topics": ["economy", "jobs"], "lang": "ro", "large": True, "name": "Test <A>"}
+    assert client.post("/api/profile", json=profile, headers=H).status_code == 401  # needs an account
+    signup(client)
+    r = client.post("/api/profile", json=profile, headers=H)
+    assert r.status_code == 200, r.text
+    # another device: log in again with a fresh client and read the settings back
+    other = TestClient(app_module.app, base_url="https://testserver")
+    other.post("/api/auth/login", json={"email": "test.a@example.com", "password": "test-pass-1"}, headers=H)
+    saved = other.get("/api/auth/me").json()["user"]["profile"]
+    assert saved == {"city": "karachi", "topics": ["economy", "jobs"], "lang": "ro", "large": True, "name": "Test A"}
+    assert client.post("/api/profile", json=dict(profile, city="atlantis"), headers=H).status_code == 422
+    assert client.post("/api/profile", json=profile).status_code == 403  # header check
+
+
 def test_signup_rules(client):
     assert signup(client, email="not-an-email").status_code == 400
     assert signup(client, password="short").status_code == 400

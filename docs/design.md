@@ -63,7 +63,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | GET | `/api/auth/me` | The logged-in reader's public profile and plan, or `null` | Cookie (optional) |
 | POST | `/api/subscribe` | Activate `{plan: basic or plus}` for 30 days (prototype, no payment) | Cookie |
 | POST | `/api/subscribe/cancel` | Cancel the plan | Cookie |
-| POST | `/api/profile` | Save `{city, topics, lang}` to the account (not yet used by the pages) | Cookie |
+| POST | `/api/profile` | Save `{name, city, topics, lang, large}` to the account; the pages call it on every settings change while logged in | Cookie |
 | POST | `/api/gift/preview` | The gift email exactly as it would be sent, without sending | No |
 | POST | `/api/gift/send` | Email the gift paper; needs a plan and gifts left this month | Cookie |
 
@@ -130,7 +130,7 @@ Reader settings stay in the browser. The server receives city, topics and langua
 
 - For each account: name, email, password hash, plan, and the gift log (recipient email, time, language, city).
 - For each gift: the recipient's email address, used to send that one email. Recipients do not get an account.
-- Reading settings still stay in the browser unless the account endpoint is used (FR-22).
+- Reading settings stay in the browser for readers without an account. With one, they are also saved to the account (name, city, topics, language, print size) so another device can restore them (FR-22). On log-in, saved settings replace the browser's; an account with nothing saved takes the browser's.
 
 ### Known limits
 

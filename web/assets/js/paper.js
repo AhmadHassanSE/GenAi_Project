@@ -365,6 +365,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  /* settings restored from the reader's account after this page loaded */
+  document.addEventListener("subah:profile", (e) => {
+    profile = e.detail;
+    lang = LANGS.includes(profile.lang) ? profile.lang : "en";
+    large = !!profile.large;
+    paintSegs();
+    render();
+  });
+
   /* ---------------------------------------------------------------- load */
   await S.api.health();
   try { catalog = await S.api.catalog(); } catch (e) { /* names fall back to ids */ }

@@ -92,7 +92,7 @@ Total automated tests now: 76, all passing.
 | D-07 | Stories whose summary failed the check showed only "No summary today" | Reading the paper | Medium | Fixed: retry, then the outlet's own words | e071f5a |
 | D-08 | The first MongoDB login supplied was rejected by Atlas (`bad auth`) | Connection test | High | Fixed by using a working database user | configuration |
 | D-09 | With the account chip, the nav overflowed at 375 px and hid the menu button | Browser check at phone width | Medium | Fixed | 27cfa98 |
-| D-10 | The Basic plan promised settings saved to the account before that was wired into the pages | Review | Low | Open (FR-22) | |
+| D-10 | The Basic plan promised settings saved to the account before that was wired into the pages | Review | Low | Fixed (FR-22) | this branch |
 
 ## Known untested areas
 

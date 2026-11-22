@@ -33,9 +33,11 @@
       try { return Object.assign({}, DEFAULT_PROFILE, JSON.parse(localStorage.getItem(KEY) || "{}")); }
       catch (e) { return Object.assign({}, DEFAULT_PROFILE); }
     },
-    set(patch) {
+    /* saves in this browser and, when logged in, to the account (FR-22) */
+    set(patch, opts) {
       const next = Object.assign({}, store.get(), patch);
       try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (e) { /* private mode */ }
+      if (!(opts && opts.local)) pushProfile(next);
       return next;
     },
     getEdition() {
@@ -133,10 +135,40 @@
     giftPreview(gift) { return api.post("/api/gift/preview", gift); },
     async giftSend(gift) { const r = await api.post("/api/gift/send", gift); setMe(r.user); return r; }
   };
+  /* ---------------------------------------------------------------- settings kept with the account (FR-22)
+     On log-in, or the first time a device sees this account, saved settings replace this browser's; an account
+     with nothing saved takes this browser's. After that, every change is saved to the account. */
+  const OWNER = "subah.profile.owner";
+  let pushTimer = 0;
+  function pushProfile(p) {
+    if (!cachedMe()) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => {
+      const body = { city: p.city || null, topics: p.topics || [], lang: p.lang || "en", large: !!p.large, name: cleanName(p.name) };
+      api.post("/api/profile", body).catch(() => { /* settings stay in this browser */ });
+    }, 400);
+  }
+  function syncProfile(user) {
+    let owner = null;
+    try { owner = user ? localStorage.getItem(OWNER) : null; if (!user) localStorage.removeItem(OWNER); } catch (e) { /* blocked */ }
+    if (!user || owner === user.id) return;
+    const saved = user.profile || {};
+    const hasSaved = saved.city || (saved.topics && saved.topics.length) || saved.lang;
+    if (hasSaved) {
+      const keep = ["name", "city", "topics", "lang", "large"].filter((k) => k in saved);
+      store.set(Object.fromEntries(keep.map((k) => [k, saved[k]])), { local: true });
+      document.dispatchEvent(new CustomEvent("subah:profile", { detail: store.get() }));
+    } else {
+      pushProfile(store.get());
+    }
+    try { localStorage.setItem(OWNER, user.id); } catch (e) { /* blocked */ }
+  }
+
   /* a copy of the public profile, so the nav can show who is logged in before the server answers */
   function cachedMe() { try { return JSON.parse(sessionStorage.getItem("subah.me") || "null"); } catch (e) { return null; } }
   function setMe(user) {
     try { user ? sessionStorage.setItem("subah.me", JSON.stringify(user)) : sessionStorage.removeItem("subah.me"); } catch (e) { /* blocked */ }
+    syncProfile(user);
     paintAccount(user);
     document.dispatchEvent(new CustomEvent("subah:me", { detail: user }));
   }

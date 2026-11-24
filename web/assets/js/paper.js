@@ -1,4 +1,4 @@
-/* The paper: renders an edition from the API (or the bundled sample), English or Urdu, regular or large print. */
+/* The paper: renders an edition from the API (or the bundled sample), English, Urdu or Roman Urdu, regular or large print. */
 document.addEventListener("DOMContentLoaded", async () => {
   const S = window.Subah;
   const $ = (s, r) => (r || document).querySelector(s);
@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const esc = S.esc;
 
   let profile = S.store.get();
-  let lang = profile.lang === "ur" ? "ur" : "en";
+  const LANGS = ["en", "ur", "ro"];
+  let lang = LANGS.includes(profile.lang) ? profile.lang : "en";
   let large = !!profile.large;
   let edition = null;
 
@@ -42,8 +43,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       sample: "آزمائشی فیڈز سے بنا نمونہ اخبار۔",
       sourceLine: (ed) => ed.source === "live" ? "تازہ فیڈز سے بنا" : ed.source === "snapshot" ? "فیڈز کے محفوظ شدہ نسخے سے بنا" : "آزمائشی فیڈز سے بنا",
       statFeeds: "فیڈز نے جواب دیا", statArticles: "رپورٹس پڑھی گئیں", statGrouped: "گروپ بندی کے بعد خبریں", statAI: "AI خلاصے", statFallback: "صرف سرخیاں", statCalls: "AI کالز"
+    },
+    /* Roman Urdu: Urdu in Latin letters. Story text comes from the AI's checked Roman Urdu; where there is none,
+       the English text is shown and labelled as such. */
+    ro: {
+      edition: "Shumara", city: (c) => c, noCity: "Poora Pakistan", stories: (n) => `${n} khabrein`,
+      summaryAI: "Khulasa AI ne sirf neeche di gayi reports se likha hai.",
+      noRoman: "Is khabar ka Roman Urdu khulasa nahin bana, is liye English mein hai.",
+      inWords: (o) => `${o} ke apne alfaaz mein, us ki report se.`, listen: "Sunein", stop: "Rokein", listenStory: "Yeh khabar sunein",
+      noUrduVoice: "", noSpeech: "Yeh browser parh kar nahin suna sakta.",
+      why: "Yeh khabar yahan kyun hai", score: (p) => `${p.outlets} idare` + (p.city ? `, aap ka shehar +${p.city}` : "") + (p.topics ? `, aap ke mauzoo +${p.topics}` : ""),
+      sources: (n) => `Zaraye (${n})`, from: "Surkhi bashukriya", readLabel: (n) => `${n} mein se parhi`, done: "Sab parh liya",
+      made: "Yeh akhbaar kaise bana", reader: "Aap ki settings", change: "Badlein",
+      topicsNone: "koi mauzoo nahin chuna", endHead: "Bas, yahi tha aaj ka akhbaar.", endBody: "Aage kuch intezar nahin kar raha. Aakhri safhe par aaj ki teen bari khabrein zaraye ke saath dobara hain.",
+      endBtn: "Aaj ka akhbaar mukammal karein", generate: "Aaj ka akhbaar abhi banayein", generating: "Ban raha hai…",
+      picked: (n, of) => `Aap ne aaj ki ${of} bari khabron mein se ${n} rakhin. Pasandida khabrein pehle hain; har group mein tarteeb shaya shuda formula ke mutabiq hai.`, repick: "Dobara chunein",
+      offline: "Akhbaar ka server nahin chal raha, is liye yeh test feeds se bana namoona akhbaar hai.",
+      sample: "Test feeds se bana namoona akhbaar.",
+      sourceLine: (ed) => ed.source === "live" ? "Taaza feeds se bana" : ed.source === "snapshot" ? "Feeds ki mehfooz copy se bana" : "Test feeds se bana",
+      statFeeds: "feeds ne jawab diya", statArticles: "reports parhi gayin", statGrouped: "grouping ke baad khabrein", statAI: "AI khulase", statFallback: "sirf surkhiyan", statCalls: "AI calls"
     }
   };
+  const htmlLang = (l) => (l === "ro" ? "ur-Latn" : l);
+  /* the story's text in the reading language, or English when the AI wrote no Roman Urdu for it */
+  const sumOf = (st, l) => (st.summary ? (st.summary[l] ? { lang: l, ...st.summary[l] } : { lang: "en", ...st.summary.en }) : null);
   const num = (n) => (lang === "ur" ? S.toUrduDigits(n) : String(n));
   let catalog = { topics: [], cities: [] };
 
@@ -66,8 +89,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   function body(st) {
     const L = T[lang];
-    if (st.summary) {
-      return `<p class="pp-dek">${esc(st.summary[lang].text)}</p><p class="pp-ai">${L.summaryAI}</p>`;
+    const sm = sumOf(st, lang);
+    if (sm) {
+      const other = sm.lang !== lang;
+      return `<p class="pp-dek"${other ? ' lang="en"' : ""}>${esc(sm.text)}</p><p class="pp-ai">${L.summaryAI}${other && L.noRoman ? ` ${L.noRoman}` : ""}</p>`;
     }
     const b = briefOf(st);
     if (!b) return "";
@@ -81,13 +106,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   function storyHTML(st, lead, pos) {
     const L = T[lang];
     const head = S.headlineOf(st, lang);
-    const headLang = !st.summary && /[؀-ۿ]/.test(head) ? "ur" : (st.summary ? lang : "en");
+    const headLang = !st.summary && /[؀-ۿ]/.test(head) ? "ur" : (st.summary ? sumOf(st, lang).lang : "en");
     const tag = lead ? "h2" : "h3";
     return `
       <article class="${lead ? "pp-lead" : "pp-story"}" id="${esc(st.id)}" data-i="${pos}" aria-labelledby="h-${esc(st.id)}">
         <div class="${lead ? "pp-lead__main" : "pp-story__main"}">
           <p class="pp-sec"><span>${esc(sectionOf(st))}</span><span class="pp-num">${num(pos + 1)}</span>${pickHTML(st)}</p>
-          <${tag} class="pp-head" id="h-${esc(st.id)}"${headLang !== lang ? ` lang="${headLang}" dir="${headLang === "ur" ? "rtl" : "ltr"}"` : ""}>${esc(head)}</${tag}>
+          <${tag} class="pp-head" id="h-${esc(st.id)}"${headLang !== lang ? ` lang="${htmlLang(headLang)}" dir="${headLang === "ur" ? "rtl" : "ltr"}"` : ""}>${esc(head)}</${tag}>
           ${!st.summary ? `<p class="pp-from">${L.from} ${esc(st.headline_from[headLang === "ur" ? "ur" : "en"])}</p>` : ""}
           ${body(st)}
           <div class="pp-badge-row">${S.coverageHTML(st, lang)}</div>
@@ -101,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function pickHTML(st) {
     const p = edition.picks && edition.picks[st.id];
     if (p !== "love") return "";
-    return `<span class="pp-loved">${lang === "ur" ? "آپ کی پسندیدہ" : "You loved this"}</span>`;
+    return `<span class="pp-loved">${lang === "ur" ? "آپ کی پسندیدہ" : lang === "ro" ? "Aap ki pasandida" : "You loved this"}</span>`;
   }
   function cityName(id) {
     const c = catalog.cities.find((x) => x.id === id);
@@ -124,15 +149,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         <h2 id="made-title">${L.made}</h2>
         <p class="pp-made__src">${L.sourceLine(ed)}. ${esc(S.dates[lang](new Date(ed.as_of)))}</p>
         <dl class="pp-made__stats">${cells.map(([v, k]) => `<div><dt>${k}</dt><dd class="tabular">${num(v)}</dd></div>`).join("")}</dl>
-        <p class="pp-made__rank">${esc(ed.ranking[lang])}</p>
+        <p class="pp-made__rank">${esc(ed.ranking[lang] || ed.ranking.en)}</p>
         ${aiNote}
-        <a class="link-arrow" href="sources.html">${lang === "ur" ? "ہمارے ذرائع اور درجہ بندی" : "Our sources and how we rank"}</a>
+        <a class="link-arrow" href="sources.html">${lang === "ur" ? "ہمارے ذرائع اور درجہ بندی" : lang === "ro" ? "Hamare zaraye aur ranking ka tareeqa" : "Our sources and how we rank"}</a>
       </section>`;
   }
   function render() {
     if (!edition) return;
     const L = T[lang];
-    paper.setAttribute("lang", lang === "ur" ? "ur" : "en");
+    paper.setAttribute("lang", htmlLang(lang));
     paper.setAttribute("dir", lang === "ur" ? "rtl" : "ltr");
     paper.setAttribute("aria-busy", "false");
     const stories = S.pickedStories(edition);
@@ -197,8 +222,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     return null;
   }
   function spoken(st, l) {
-    const head = st.summary ? st.summary[l].headline : (st.headline[l] || st.headline.en);
-    const text = st.summary ? st.summary[l].text : ((st.brief && st.brief[l]) || {}).text || "";
+    const sm = sumOf(st, l);
+    const head = sm ? sm.headline : (st.headline[l] || st.headline.en);
+    const text = sm ? sm.text : ((st.brief && (st.brief[l] || st.brief.en)) || {}).text || "";
     return `${head}. ${text}`;
   }
   function stopSpeaking() {
@@ -337,6 +363,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       genBtn.classList.remove("is-busy");
       $(".pp-generate__label", genBtn).textContent = T[lang].generate;
     }
+  });
+
+  /* settings restored from the reader's account after this page loaded */
+  document.addEventListener("subah:profile", (e) => {
+    profile = e.detail;
+    lang = LANGS.includes(profile.lang) ? profile.lang : "en";
+    large = !!profile.large;
+    paintSegs();
+    render();
   });
 
   /* ---------------------------------------------------------------- load */

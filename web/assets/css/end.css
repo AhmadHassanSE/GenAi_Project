@@ -141,3 +141,24 @@ h2.is-ur { font-weight: 700; }
 .top3__src ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-family: var(--font-ui); font-size: 0.9rem; line-height: 1.4; }
 .top3__src a { color: var(--ink-2); }
 .top3__src a[lang="ur"] { font-family: var(--font-urdu); line-height: 1.9; }
+
+/* ------------------------------------------------------------ takeaways and quiz */
+.takeaways, .quiz { padding: var(--space-3xl) 0; border-top: 4px double var(--rule-2); }
+.takeaways h2, .quiz h2 { font-size: var(--step-5); max-width: 16ch; }
+.takeaways__list { margin: var(--space-xl) 0 0; padding-inline-start: 1.4em; display: grid; gap: var(--space-md); font-family: var(--font-read); font-size: var(--step-1); line-height: 1.5; max-width: 62ch; }
+.takeaways__list li::marker { color: var(--kesar-deep); font-family: var(--font-display); }
+.takeaways__list li[lang="ur"], .quiz [lang="ur"] { font-family: var(--font-urdu); line-height: 2.1; }
+.quiz__lede { color: var(--muted); margin: var(--space-sm) 0 0; }
+.quiz__list { list-style: none; margin: var(--space-xl) 0 0; padding: 0; display: grid; gap: var(--space-lg); max-width: 62ch; }
+.quiz__q { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 12px; }
+.quiz__ask { margin: 0; font-family: var(--font-read); font-size: var(--step-1); line-height: 1.45; }
+.quiz__opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz__opt { font: inherit; padding: 10px 16px; min-height: 44px; border-radius: 99px; border: 1px solid var(--rule-2); background: var(--paper-2); color: var(--ink); cursor: pointer; }
+.quiz__opt:hover:not(:disabled) { background: var(--kesar-soft); }
+.quiz__opt:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.quiz__opt:disabled { cursor: default; opacity: 0.75; }
+.quiz__opt.is-right { background: var(--ok-soft); border-color: var(--ok); color: var(--ink); opacity: 1; }
+.quiz__opt.is-wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--ink); opacity: 1; text-decoration: line-through; }
+.quiz__fb { margin: 0; min-height: 1.4em; display: flex; flex-wrap: wrap; gap: 12px; }
+.quiz__src { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.quiz__score { font-family: var(--font-display); font-size: var(--step-2); margin: var(--space-lg) 0 0; }

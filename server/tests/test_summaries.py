@@ -1,4 +1,4 @@
-"""Judge checks: summaries contain no claims absent from the linked sources, and the paper still generates
+"""Checks: summaries contain no claims absent from the linked sources, and the paper still generates
 when the AI fails."""
 import json
 
@@ -6,7 +6,7 @@ import pytest
 
 from server.subah.edition import build_edition
 from server.subah.grounding import check
-from server.subah.summarize import summarize
+from server.subah.summarize import TOKEN_LIMIT, estimate_tokens, make_batches, output_budget, summarize, SYSTEM
 
 SOURCES = [
     {"id": "a1", "outlet": "Dawn", "lang": "en", "title": "Govt keeps petrol price unchanged, raises diesel by Rs3 per litre",
@@ -19,6 +19,8 @@ GOOD = {
     "summary_en": "The federal government kept petrol unchanged for the next fortnight and raised high-speed diesel by Rs3 per litre.",
     "headline_ur": "پیٹرول کی قیمت برقرار، ڈیزل ۳ روپے مہنگا",
     "summary_ur": "حکومت نے پیٹرول کی قیمت برقرار رکھی اور ڈیزل 3 روپے فی لیٹر مہنگا کر دیا۔",
+    "headline_ro": "Petrol ki qeemat barqarar, diesel Rs3 mehnga",
+    "summary_ro": "Hukumat ne agle pandrah din ke liye petrol ki qeemat barqarar rakhi aur high-speed diesel Rs3 fi litre mehnga kar diya.",
     "used_sources": ["a1", "a2"],
 }
 
@@ -33,11 +35,68 @@ def test_grounded_summary_passes():
     ("summary_en", "The IMF welcomed the decision.", "name 'IMF'"),
     ("summary_ur", "ڈیزل ۷ روپے مہنگا ہو گیا۔", "number 7"),
     ("headline_en", "", "headline_en is empty"),
+    ("summary_ro", "Diesel Rs5 mehnga ho gaya.", "number 5 in the Roman Urdu"),
+    ("summary_ro", "Hukumat ne kaha ke IMF ne faisle ka khairmaqdam kiya.", "name 'IMF' in the Roman Urdu"),
+    ("summary_ro", "", "Roman Urdu headline or summary is empty"),
 ])
 def test_unsupported_claims_are_rejected(field, value, expect):
     out = dict(GOOD, **{field: value})
     problems = check(out, SOURCES)
     assert any(expect in p for p in problems), problems
+
+
+def test_roman_urdu_is_optional_and_opening_words_are_not_names():
+    without = {k: v for k, v in GOOD.items() if not k.endswith("_ro")}
+    assert check(without, SOURCES) == []
+    # "Hukumat" opens the sentence, so it is not read as a name; "Govt" inside a sentence is a name and is in the sources
+    out = dict(GOOD, summary_ro="Hukumat ne kaha ke Govt ne petrol ki qeemat barqarar rakhi.")
+    assert check(out, SOURCES) == []
+
+
+def test_roman_urdu_reaches_the_edition_only_when_written():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        data["stories"][0].update(headline_ro="Petrol ki qeemat barqarar", summary_ro="Hukumat ne petrol ki qeemat barqarar rakhi.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:2], client=FakeClient(reply), cache_path=None)
+    assert run.results["s0"]["ro"]["headline"] == "Petrol ki qeemat barqarar"
+    assert "ro" not in run.results["s1"]  # no Roman Urdu written: the page shows English for this story
+
+
+def test_english_in_the_roman_urdu_drops_only_the_roman_urdu():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        for s in data["stories"]:
+            s.update(headline_ro=s["headline_en"], summary_ro="Diesel went up for the next fortnight, the government said.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:2], client=FakeClient(reply), cache_path=None)
+    assert all(r["status"] == "ai" and "ro" not in r for r in run.results.values())
+    assert run.stats()["roman_dropped"] == 2
+
+
+def test_a_failed_roman_urdu_check_drops_only_the_roman_urdu():
+    def reply(payload):
+        data = json.loads(echo_good(payload))
+        data["stories"][0].update(headline_ro="Diesel 9 rupay mehnga", summary_ro="Hukumat ne diesel 9 rupay mehnga kar diya.")
+        return json.dumps(data)
+
+    run = summarize(ITEMS[:1], client=FakeClient(reply), cache_path=None)
+    assert run.results["s0"]["status"] == "ai" and "ro" not in run.results["s0"]
+    assert run.stats()["roman_dropped"] == 1
+
+
+def test_batches_fit_the_request_limit():
+    long_desc = "پیٹرول کی قیمت " * 120  # Urdu costs more tokens per character
+    items = [{"id": f"s{i}", "sources": [dict(SOURCES[1], id=f"a{i}{k}", description=long_desc) for k in range(6)]}
+             for i in range(10)]
+    batches = make_batches(items, batch_size=5)
+    assert [it["id"] for b in batches for it in b] == [it["id"] for it in items]  # order kept, nothing lost
+    for b in batches:
+        size = estimate_tokens(SYSTEM) + sum(estimate_tokens(json.dumps(it, ensure_ascii=False)) for it in b)
+        assert len(b) == 1 or size + output_budget(len(b)) <= TOKEN_LIMIT * 0.9
+    assert len(make_batches(ITEMS, batch_size=5)) == 2  # small stories still go five at a time
 
 
 def test_citing_sources_from_another_story_is_rejected():

@@ -90,6 +90,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       : `<div class="acct-card__row"><span class="acct-card__plan">No plan yet</span></div>
       <p class="acct-sub">Basic is $3 a month and Plus is $8. Either one lets you email the paper to family.</p>
       <div class="acct-actions"><a class="btn btn--ink" href="pricing.html">See plans</a></div>`;
+    const daily = $("#daily-on");
+    daily.checked = !!user.daily_email;
+    const p0 = user.profile || {};
+    $("#daily-note").textContent = p0.city || (p0.topics && p0.topics.length)
+      ? "It uses the settings saved to your account; change them on Make my paper while logged in."
+      : "Choose a city and topics on Make my paper while logged in, so the email is ranked for you.";
+    daily.onchange = async () => {
+      daily.disabled = true;
+      try { await S.api.setDaily(daily.checked); S.toast(daily.checked ? "Your paper will arrive at 7:00 every morning." : "Morning emails turned off."); }
+      catch (e) { daily.checked = !daily.checked; S.toast(`Could not change it: ${e.message}`); }
+      finally { daily.disabled = false; }
+    };
     const fill = $(".gauge__fill");
     if (fill) requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = fill.style.getPropertyValue("--w"); }));
     const cancel = $("#home-cancel");

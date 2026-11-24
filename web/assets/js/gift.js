@@ -43,10 +43,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cityId = el.city.value;
     const cityObj = catalog.cities.find((c) => c.id === cityId);
     const topics = chosen();
-    el.paper.setAttribute("lang", lang === "ur" ? "ur" : "en");
+    el.paper.setAttribute("lang", lang === "ur" ? "ur" : lang === "ro" ? "ur-Latn" : "en");
     el.paper.setAttribute("dir", lang === "ur" ? "rtl" : "ltr");
     el.paper.style.setProperty("--scale", size);
-    const sign = lang === "ur" ? `محبت کے ساتھ، ${S.urduName(from)}` : `With love, ${from}`;
+    const sign = lang === "ur" ? `محبت کے ساتھ، ${S.urduName(from)}` : lang === "ro" ? `Mohabbat ke saath, ${from}` : `With love, ${from}`;
     let list = "";
     if (edition && edition.stories.length) {
       /* their paper: same mechanical score, recomputed for their settings */
@@ -58,8 +58,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       list = scored.map(({ st, tags }) => {
         const head = S.headlineOf(st, lang);
         const ur = /[؀-ۿ]/.test(head);
+        const en = lang === "ro" && !ur && !(st.summary && st.summary.ro);
         return `<div class="gp__story">
-          <h3 class="gp__head"${ur !== (lang === "ur") ? ` lang="${ur ? "ur" : "en"}" dir="${ur ? "rtl" : "ltr"}"` : ""}>${S.esc(head)}</h3>
+          <h3 class="gp__head"${ur !== (lang === "ur") || en ? ` lang="${ur ? "ur" : "en"}" dir="${ur ? "rtl" : "ltr"}"` : ""}>${S.esc(head)}</h3>
           ${S.coverageHTML(st, lang, { dots: false })}
           ${S.forYouHTML(tags, lang)}
         </div>`;
@@ -67,12 +68,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     el.paper.innerHTML = `
       <header class="gp__mast">
-        <div class="gp__meta"><span>${lang === "ur" ? "تحفہ" : "A gift paper"}</span><span>${S.esc(cityObj ? (lang === "ur" ? cityObj.ur : cityObj.en) : "")}</span></div>
+        <div class="gp__meta"><span>${lang === "ur" ? "تحفہ" : lang === "ro" ? "Tohfa" : "A gift paper"}</span><span>${S.esc(cityObj ? (lang === "ur" ? cityObj.ur : cityObj.en) : "")}</span></div>
         <h2 class="gp__title">${S.esc(S.paperTitle(name, lang))}</h2>
         <p class="gp__sign">${S.esc(sign)}</p>
-        <div class="gp__meta"><span>${S.dates[lang]()}</span><span>${size > 1 ? (lang === "ur" ? "بڑے حروف" : "Large print") : ""}</span></div>
+        <div class="gp__meta"><span>${S.dates[lang]()}</span><span>${size > 1 ? (lang === "ur" ? "بڑے حروف" : lang === "ro" ? "Bare huroof" : "Large print") : ""}</span></div>
       </header>
-      <div class="gp__list">${list || `<p class="gp__empty">${lang === "ur" ? "آج کی خبریں دیکھنے کے لیے پہلے اخبار بنائیں۔" : "Generate today’s paper first to preview their stories."}</p>`}</div>`;
+      <div class="gp__list">${list || `<p class="gp__empty">${lang === "ur" ? "آج کی خبریں دیکھنے کے لیے پہلے اخبار بنائیں۔" : lang === "ro" ? "Un ki khabrein dekhne ke liye pehle aaj ka akhbaar banayein." : "Generate today’s paper first to preview their stories."}</p>`}</div>`;
     $("#gp-note").textContent = edition && edition.sample ? "Preview uses the sample paper built from test feeds." : "";
     renderRoute();
   }
@@ -140,7 +141,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     emailEl.value = d.recipient_email || "";
     el.city.value = d.city || "";
     $$("input", el.topics).forEach((i) => { i.checked = (d.topics || []).includes(i.value); });
-    lang = d.lang === "en" ? "en" : "ur";
+    lang = ["en", "ro"].includes(d.lang) ? d.lang : "ur";
     $$("#g-lang button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.lang === lang)));
     size = d.large ? 1.25 : 1;
     $$("#g-size button").forEach((x) => x.setAttribute("aria-pressed", String(parseFloat(x.dataset.size) === size)));

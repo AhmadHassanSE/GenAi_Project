@@ -57,10 +57,12 @@ def for_recipient(edition: dict, city: str | None, topics: list[str], limit: int
 
 
 def story_text(st: dict, lang: str) -> dict:
-    """Headline and body for one story: the checked summary, else the outlet's own words, credited."""
+    """Headline and body for one story: the checked summary, else the outlet's own words, credited.
+    A Roman Urdu reader gets the English summary for a story the AI wrote no Roman Urdu for."""
     if st.get("summary"):
-        s = st["summary"][lang]
-        return {"headline": s["headline"], "text": s["text"], "credit": None, "lang": lang}
+        got = lang if st["summary"].get(lang) else "en"
+        s = st["summary"][got]
+        return {"headline": s["headline"], "text": s["text"], "credit": None, "lang": got}
     b = (st.get("brief") or {})
     own = b.get(lang) or b.get("en") or b.get("ur")
     head = st["headline"].get(lang) or st["headline"]["en"]
@@ -80,22 +82,62 @@ L = {
            "footer": ("{f} set up this paper for you on Subah. Every story is grouped from reports by the outlets on "
                       "our published list, and links to each one. Summaries are written only from those reports."),
            "reply": "To stop these emails, reply to this message and {f} will be told.",
-           "title": "{n}'s Subah", "large": "Large print", "note": "A note from {f}"},
+           "title": "{n}'s Subah", "large": "Large print", "note": "A note from {f}",
+           "daily": "Your morning paper", "daily_line": "Ten minutes of news, then you are done.",
+           "daily_footer": ("You asked Subah to email you this paper every morning. Every story is grouped from reports "
+                            "by the outlets on our published list, and links to each one. Summaries are written only "
+                            "from those reports."),
+           "daily_reply": "To stop these emails, turn off \"Email me my paper\" on your account page."},
     "ur": {"gift": "تحفہ", "love": "محبت کے ساتھ، {f}", "for_you": "آپ کے لیے", "sources": "رپورٹس پڑھیں",
            "own": "{o} کے اپنے الفاظ میں، اس کی رپورٹ سے۔", "read_more": "آج کا اخبار صبح پر کھولیں",
            "footer": ("{f} نے یہ اخبار آپ کے لیے صبح پر بنایا ہے۔ ہر خبر ہماری شائع شدہ فہرست کے اداروں کی رپورٹس سے "
                       "جمع کی گئی ہے اور ہر رپورٹ کا لنک ساتھ ہے۔ خلاصے صرف انہی رپورٹس سے لکھے جاتے ہیں۔"),
            "reply": "یہ ای میلز بند کرنے کے لیے اس پیغام کا جواب دیں، {f} کو بتا دیا جائے گا۔",
-           "title": "{n} کی صبح", "large": "بڑے حروف", "note": "{f} کی طرف سے پیغام"},
+           "title": "{n} کی صبح", "large": "بڑے حروف", "note": "{f} کی طرف سے پیغام",
+           "daily": "آپ کا صبح کا اخبار", "daily_line": "چند منٹ کی خبریں، پھر بس۔",
+           "daily_footer": ("آپ نے صبح سے کہا تھا کہ یہ اخبار ہر صبح ای میل کیا جائے۔ ہر خبر ہماری شائع شدہ فہرست کے "
+                            "اداروں کی رپورٹس سے جمع کی گئی ہے اور ہر رپورٹ کا لنک ساتھ ہے۔ خلاصے صرف انہی رپورٹس سے لکھے جاتے ہیں۔"),
+           "daily_reply": "یہ ای میلز بند کرنے کے لیے اپنے اکاؤنٹ کے صفحے پر \"میرا اخبار ای میل کریں\" بند کریں۔"},
+    "ro": {"gift": "Tohfa", "love": "Mohabbat ke saath, {f}", "for_you": "Aap ke liye", "sources": "Reports parhein",
+           "own": "{o} ke apne alfaaz mein, us ki report se.", "read_more": "Aaj ka akhbaar Subah par kholein",
+           "footer": ("{f} ne yeh akhbaar aap ke liye Subah par banaya hai. Har khabar hamari shaya shuda fehrist ke "
+                      "idaron ki reports se jama ki gayi hai aur har report ka link saath hai. Khulase sirf inhi "
+                      "reports se likhe jate hain."),
+           "reply": "Yeh emails band karne ke liye is paigham ka jawab dein, {f} ko bata diya jayega.",
+           "title": "{n} ki Subah", "large": "Bare huroof", "note": "{f} ki taraf se paigham",
+           "daily": "Aap ka subah ka akhbaar", "daily_line": "Chand minute ki khabrein, phir bas.",
+           "daily_footer": ("Aap ne Subah se kaha tha ke yeh akhbaar har subah email kiya jaye. Har khabar hamari shaya "
+                            "shuda fehrist ke idaron ki reports se jama ki gayi hai aur har report ka link saath hai."),
+           "daily_reply": "Yeh emails band karne ke liye apne account ke safhe par \"Email me my paper\" band karein."},
 }
 
 
-def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
-    """Returns (subject, html, text) for one gift paper."""
-    lang = "ur" if gift.get("lang") == "ur" else "en"
+def coverage(st: dict, lang: str) -> str:
+    """The coverage label in the reading language; editions made before Roman Urdu have no "ro" label."""
+    cov = st.get("coverage") or {}
+    if cov.get(lang):
+        return cov[lang]
+    if lang == "ro":
+        n = st["outlet_count"]
+        return f"{n} {'idare' if n == 1 else 'idaron'} ne report kiya"
+    return cov.get("en", "")
+
+
+def render_daily(edition: dict, user: dict) -> tuple[str, str, str]:
+    """The reader's own morning paper by email: their saved city, topics, language and print size."""
+    p = user.get("profile") or {}
+    name = (p.get("name") or (user.get("name") or "").split(" ")[0]).strip()[:24]
+    return render_gift(edition, {"recipient_name": name, "city": p.get("city"), "topics": p.get("topics") or [],
+                                 "lang": p.get("lang") or "en", "large": bool(p.get("large")), "from_name": "Subah",
+                                 "note": "", "stories": 10}, daily=True)
+
+
+def render_gift(edition: dict, gift: dict, daily: bool = False) -> tuple[str, str, str]:
+    """Returns (subject, html, text) for one gift paper, or with daily=True the reader's own morning paper."""
+    lang = gift.get("lang") if gift.get("lang") in ("ur", "ro") else "en"
     t = L[lang]
     ur_ok = lang == "ur"
-    name = (ur_ok and gift.get("recipient_name_ur")) or gift["recipient_name"] or ("آپ" if ur_ok else "Your")
+    name = (ur_ok and gift.get("recipient_name_ur")) or gift["recipient_name"] or ("آپ" if ur_ok else "Aap" if lang == "ro" else "Your")
     sender = (ur_ok and gift.get("from_name_ur")) or gift["from_name"]
     big = bool(gift.get("large"))
     base = 20 if big else 16
@@ -103,7 +145,7 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     lh = 2.1 if lang == "ur" else 1.55
     dir_ = "rtl" if lang == "ur" else "ltr"
     align = "right" if lang == "ur" else "left"
-    title = t["title"].format(n=name) if (lang == "ur" or gift["recipient_name"]) else "Your Subah"
+    title = t["title"].format(n=name) if (lang != "en" or gift["recipient_name"]) else "Your Subah"
     date = today(lang)
     picks = for_recipient(edition, gift.get("city"), gift.get("topics") or [], limit=gift.get("stories", 5))
 
@@ -115,11 +157,15 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
         return (f'<span dir="{"rtl" if ur else "ltr"}" lang="{"ur" if ur else "en"}" '
                 f'style="font-family:{URDU_FONT if ur else READ_FONT}">{escape(text)}</span>')
 
+    if daily:  # the reader's own paper: no sender, a different header line and footer
+        t = dict(t, gift=t["daily"], love="{f}", footer=t["daily_footer"], reply=t["daily_reply"])
+        sender = t["daily_line"]
+
     stories_html, stories_txt = [], []
     for i, p in enumerate(picks, 1):
         st, tags = p["story"], p["tags"]
         s = story_text(st, lang)
-        cov = st["coverage"][lang]
+        cov = coverage(st, lang)
         chips = "".join(
             f'<span style="display:inline-block;margin:0 0 4px 6px;padding:2px 10px;border-radius:99px;'
             f'background:#fbecd6;color:#7a3b10;font-size:{base - 3}px">{escape(tg["ur"] if lang == "ur" else tg["en"])}</span>'
@@ -173,7 +219,7 @@ def render_gift(edition: dict, gift: dict) -> tuple[str, str, str]:
     text = (f"{title}\n{t['love'].format(f=sender)}\n{date}\n\n" + (f"{note}\n\n" if note else "")
             + "\n\n".join(stories_txt) + f"\n\n{SITE_URL}/paper.html\n\n{t['footer'].format(f=sender)}\n")
     sep = "، " if lang == "ur" else ", "
-    subject = f"{title}{sep}{date}: {t['love'].format(f=sender)}"
+    subject = f"{title}{sep}{date}" if daily else f"{title}{sep}{date}: {t['love'].format(f=sender)}"
     return subject, html, text
 
 

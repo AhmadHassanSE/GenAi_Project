@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 : "${HF_TOKEN:?set HF_TOKEN to a Hugging Face access token with write permission}"
 : "${HF_SPACE:?set HF_SPACE to your Space id, for example your-username/subah}"
-REPO_URL="${REPO_URL:-https://github.com/AhmadHassanSE/se-max-hackathon}"
+REPO_URL="${REPO_URL:-https://github.com/AhmadHassanSE/GenAi_Project}"
 
 OUT="$(mktemp -d)"
 cp -r server web "$OUT/"

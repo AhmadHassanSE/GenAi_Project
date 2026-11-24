@@ -1,6 +1,6 @@
-# Judge checks
+# Evaluation checks
 
-Each check from the idea approval, with where to see it and the test that proves it. Run every test with `bash scripts/test.sh` (or `python -m pytest server/tests -q`).
+Each check from our MVP scope, with where to see it and the test that proves it. Run every test with `bash scripts/test.sh` (or `python -m pytest server/tests -q`).
 
 | # | Check | Where to see it | Automated test |
 |---|-------|-----------------|----------------|
@@ -11,7 +11,7 @@ Each check from the idea approval, with where to see it and the test that proves
 | 5 | The paper still generates when AI fails | No key, API error, bad JSON, missing stories, refusal, quota: every case falls back to source headlines with links | `test_summaries.py::test_paper_generates_without_ai`, `test_paper_generates_when_ai_errors`, `test_bad_ai_output_falls_back`, `test_batches_and_call_budget` |
 | 6 | Bad feed data is handled without crashing | `server/subah/feeds.py`; the fixed set includes a malformed feed, an empty feed, an empty file, a timed-out feed, a duplicate, an old item, a title-less item and HTML in descriptions | `test_feeds.py` (11 tests) |
 
-## Other approval requirements
+## Other scope requirements
 
 | Requirement | Where |
 |-------------|-------|
@@ -21,13 +21,13 @@ Each check from the idea approval, with where to see it and the test that proves
 | Feed metadata and links only, attribution, licensing noted | `feeds.py` never fetches article pages; `/sources.html` and README "Known limitations" |
 | Reader picks (pass, love, keep) | The reader's own choice; no AI. Within loved and kept stories the published formula still sets the order (`pickedStories()` in `common.js`) |
 | Published outlet list, mechanical ranking | `/sources.html`, `GET /api/outlets`, `server/outlets.json`, formula in `rank.py` |
-| Scope: no payments, audio, quiz or third language; English + Urdu + large print; generate-now action | Paper page button "Generate today’s paper now" and `POST /api/generate` |
+| First MVP scope: no payments, audio, quiz or third language; English + Urdu + large print; generate-now action | Paper page button "Generate today’s paper now" and `POST /api/generate`. Payments (prototype), read-aloud and Roman Urdu were added later on the team's request; see "Added after approval" below |
 | Quota: group before AI, summarise only selected stories, keys server-side | `edition.py` order of steps; `SUBAH_AI_BATCH`, `SUBAH_MAX_AI_CALLS`, per-story cache; key read only from server environment; `test_api.py::test_health_has_no_secrets` |
-| Data: event rule on pre-collected data; test profiles only | `SUBAH_SOURCE=live|snapshot|fixtures`; profiles are never stored on the server; test readers A, B and C. Event ruling: **[insert ruling]** |
+| Data: live, saved or synthetic feeds; test profiles only | `SUBAH_SOURCE=live|snapshot|fixtures`; profiles are never stored on the server; test readers A, B and C |
 
-## Added after approval
+## Added after the first MVP
 
-These were added on the team's request after the approval; the six checks above are unchanged.
+These were added after the first MVP; the six checks above are unchanged.
 
 | Feature | Where to see it | Automated test |
 |---------|-----------------|----------------|
@@ -36,3 +36,8 @@ These were added on the team's request after the approval; the six checks above 
 | Plans: Basic $3, Plus $8 (prototype checkout, no payment) | `/pricing.html`, `GET /api/plans` | `test_plans_are_three_and_eight_dollars`, `test_subscribe_needs_login_then_activates` |
 | Gift paper by email, re-ranked for the recipient with the published formula | `/gift.html` (Send their paper, Preview the email); `server/subah/mailer.py` | `test_gift_is_sent_and_counted`, `test_gift_needs_login_and_plan`, `test_email_is_built_from_checked_text_with_links`, `test_preview_needs_no_account` |
 | Read aloud | Paper page: Listen in the top bar and on each story | Manual check |
+| Settings saved to the account and restored on another device (FR-22) | Log in on two browsers; change settings on one, log in on the other; `syncProfile()` in `common.js`, `POST /api/profile` | `test_settings_are_saved_to_the_account_and_restored` |
+| Paper printed at 06:30, emailed at 07:00 to readers who asked, once a day | `/account.html` (Email me my paper); `scheduler.py`; `GET /api/health` shows `morning_run` | `test_morning.py` (6 tests) |
+| Takeaways and quiz, checked like summaries | `/end.html`; `closing.py` | `test_closing.py` (7 tests) |
+| Roman Urdu, checked like English and Urdu | Paper page: **Roman** in the language switch; setup page: **Roman Urdu**. `grounding.py` checks numbers and in-sentence names in the Roman Urdu | `test_unsupported_claims_are_rejected` (Roman Urdu number, name, empty), `test_roman_urdu_gift_email`, `test_roman_urdu_is_optional_and_opening_words_are_not_names`, `test_roman_urdu_reaches_the_edition_only_when_written`, `test_roman_urdu_profile_is_accepted` |
+| Topic balance in the ranking | `/sources.html` (Balance step); `section_cap()` in `rank.py` | `test_one_section_cannot_fill_the_paper`, `test_held_back_stories_fill_the_paper_when_there_is_nothing_else` |

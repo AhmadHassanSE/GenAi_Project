@@ -67,6 +67,8 @@ def coverage_label(count: int, lang: str = "en") -> str:
     if lang == "ur":
         digits = str(count).translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
         return f"{digits} {'ادارے' if count == 1 else 'اداروں'} نے رپورٹ کیا"
+    if lang == "ro":
+        return f"{count} {'idare' if count == 1 else 'idaron'} ne report kiya"
     return f"Reported by {count} outlet" + ("" if count == 1 else "s")
 
 

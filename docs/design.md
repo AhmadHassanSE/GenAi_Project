@@ -25,14 +25,16 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | `server/subah/embed.py` | Sentence embeddings, multilingual, local | fastembed (ONNX) |
 | `server/subah/group.py` | Average-link clustering, time window, coverage label | numpy |
 | `server/subah/tags.py` | Topic and city tags from English and Urdu keywords; For you tags | regex |
-| `server/subah/rank.py` | Mechanical score and top-ten selection | Python |
-| `server/subah/summarize.py` | Batched, cached summaries in English and Urdu | Groq chat API (OpenAI-compatible, over httpx), model `openai/gpt-oss-120b`, strict JSON schema output with a plain JSON fallback |
-| `server/subah/grounding.py` | Rejects summaries with numbers or names not in the sources | Python |
+| `server/subah/rank.py` | Mechanical score, top-ten selection, topic balance (no section over 3 of 10) | Python |
+| `server/subah/summarize.py` | Batched, cached summaries in English, Urdu and Roman Urdu | Groq chat API (OpenAI-compatible, over httpx), model `openai/gpt-oss-120b`, strict JSON schema output with a plain JSON fallback |
+| `server/subah/grounding.py` | Rejects summaries with numbers or names not in the sources (English, Urdu numbers, Roman Urdu numbers and in-sentence names) | Python |
 | `server/subah/edition.py` | Orchestrates one paper; fallback chain live, snapshot, fixtures | Python |
 | `server/app.py` | API and static files; no-cache headers; one generation at a time | FastAPI, uvicorn |
 | `web/` | Home, onboarding, paper, last page, gift preview, sources page | HTML, CSS, vanilla JS, GSAP on the home page |
 | `server/subah/accounts.py` | Sign up, log in, sessions, plans, gift log; MongoDB or in-memory store | pymongo, hashlib.scrypt |
 | `server/subah/mailer.py` | Builds the recipient's gift paper from today's edition and sends it through Gmail | smtplib (SMTP over SSL) |
+| `server/subah/scheduler.py` | The morning run: prints the paper at 06:30 and emails it at 07:00 to readers who asked, once a day | Python thread inside the web server |
+| `server/subah/closing.py` | Takeaways and quiz for the last page: one AI call from the checked summaries, checked against the sources; questions built in code fill any gap | Groq (same client), Python |
 | `web/account.html`, `web/pricing.html` | Log in and sign up, account page, plans and prototype checkout | HTML, CSS, vanilla JS |
 
 ## Data model
@@ -42,7 +44,7 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 - **Edition**: profile (city, topics, language), ten stories (rank, score parts, coverage, For you tags, summary or headline fallback, sources), stats, AI usage, feed report.
 - **Picks**: the reader's pass, love or keep per story, kept with the edition in the browser; the paper shows loved, then kept, each in formula order.
 - **Reader profile**: kept in the browser only (`localStorage`): masthead name, city, topics, language, large print.
-- **User** (MongoDB `users`, added after approval): name, email (unique), scrypt password hash, created time, subscription (plan, status, start, renewal, `demo: true`), profile.
+- **User** (MongoDB `users`, added after the first MVP): name, email (unique), scrypt password hash, created time, subscription (plan, status, start, renewal, `demo: true`), profile.
 - **Session** (`sessions`): SHA-256 hash of a random token, user id, expiry (30 days; MongoDB removes expired sessions). The token itself is only in the reader's HttpOnly cookie.
 - **Gift log** (`gifts`): user id, recipient email, time sent, language, city. Used for the monthly allowance.
 
@@ -63,9 +65,10 @@ A FastAPI server (`server/app.py`) serves the static site in `web/` and a small 
 | GET | `/api/auth/me` | The logged-in reader's public profile and plan, or `null` | Cookie (optional) |
 | POST | `/api/subscribe` | Activate `{plan: basic or plus}` for 30 days (prototype, no payment) | Cookie |
 | POST | `/api/subscribe/cancel` | Cancel the plan | Cookie |
-| POST | `/api/profile` | Save `{city, topics, lang}` to the account (not yet used by the pages) | Cookie |
+| POST | `/api/profile` | Save `{name, city, topics, lang, large}` to the account; the pages call it on every settings change while logged in | Cookie |
 | POST | `/api/gift/preview` | The gift email exactly as it would be sent, without sending | No |
 | POST | `/api/gift/send` | Email the gift paper; needs a plan and gifts left this month | Cookie |
+| POST | `/api/daily` | Turn the reader's own 7 am paper by email on or off `{on}` | Cookie |
 
 Every `POST` that changes account state must carry the header `X-Subah: 1` (see Security).
 
@@ -77,21 +80,25 @@ Every `POST` that changes account state must carry the header `X-Subah: 1` (see 
 | Coverage label | confirmed / single / unconfirmed; outlet count | Outlet count | A count is factual; confirmation is a judgement we cannot make | Readers must interpret the number themselves |
 | Outlet definition | Count feeds; count brands | Newsroom brand, language editions once | Prevents one newsroom inflating its own count | BBC News and BBC Urdu count as one |
 | Ranking | AI importance; engagement; mechanical | Published formula | Neutral and explainable | Big, widely covered stories dominate |
-| Summaries | One call per story; one call per paper; batches | Batches of 5 with a per-story cache | Few calls, one bad batch does not lose the whole paper | Slightly more prompt tokens per call |
+| Summaries | One call per story; one call per paper; batches | Batches of up to 5, sized to the AI service's 8,000-token request limit, at most 6 sources per story, with a per-story cache; a rate-limit reply with a short wait is retried once | Few calls, one bad batch does not lose the whole paper | Slightly more prompt tokens per call |
 | Grounding | Trust the prompt; LLM judge; code check | Code check on numbers and names | Deterministic and testable, no extra AI calls | Strict: some valid summaries fall back to headlines |
 | Front end | Next.js; static pages | Static pages served by FastAPI | One process to deploy, works offline with the bundled sample | Less componentised code |
 | No-summary stories | Show "no summary"; show headlines only; quote the outlet | One retry with the rejection reasons, then the outlet's own description, credited and linked | The reader always gets a sentence of text, and it is the outlet's words, not ours | A quoted description can be less neutral than a summary |
 | Accounts store | SQLite on the Space; MongoDB Atlas | MongoDB Atlas, in-memory when not configured | The Space's disk is wiped on restart; Atlas has a free tier | Needs a network path from the Space to Atlas |
 | Passwords and sessions | JWT; server sessions | Server sessions, random token, only its hash stored, HttpOnly cookie | Logging out really ends the session; a leaked database has no usable tokens | One database read per request |
-| Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the event | Plans are not paid for |
+| Payments | Stripe test mode; prototype checkout | Prototype checkout | No payment account was available during the build | Plans are not paid for |
 | Email | Gmail API with OAuth; Gmail SMTP with an app password | Gmail SMTP with an app password | No OAuth consent screen to set up; works from the Space | Gmail's daily sending limit; one sender address |
+| Morning delivery | External cron service; scheduled cloud job; a thread in the web server | A thread in the web server, with a sent-on date per account | No extra service or cost; the date on each account stops double sends after a restart | Nothing is printed while a free Space sleeps |
 | Read aloud | Text-to-speech API; browser voices | Browser `speechSynthesis` | Free, no key, works offline | Voice quality varies; many devices have no Urdu voice |
+| Roman Urdu | Rule-based transliteration from Urdu; AI writes it with the other two languages | AI, in the same call, then checked in code | Urdu script drops most vowels, so rules give unreadable Roman Urdu; one call keeps the call budget | No standard spelling, so names are checked only inside sentences; a story without Roman Urdu shows English |
+| Topic balance | None; per-topic quota; cap per section | Cap: no section over 30% of the paper (3 of 10), held-back stories refill a short paper | Keeps one big topic from filling the paper while staying mechanical and published | On a one-topic day a widely reported story can be held back for a less reported one |
 
 ## AI components
 
-- **What AI does:** writes a neutral headline and a one-to-two-sentence summary for each of the ten selected stories, in English and Urdu, using only the headlines and feed descriptions of that story's own reports.
+- **What AI does:** writes a neutral headline and a one-to-two-sentence summary for each of the ten selected stories, in English, Urdu and Roman Urdu, using only the headlines and feed descriptions of that story's own reports.
 - **What code validates:** JSON schema (structured output); every number and capitalised name present in the sources; cited source ids belong to the story; nothing empty.
 - **When AI fails:** no key, rate limit, network error, refusal, cut-off output, invalid JSON, missing story, failed grounding or used-up call budget all lead to the same result for that story: the outlets' own headlines with links. The paper is always produced.
+- **Also AI (last page):** three takeaways and three quiz questions from the checked summaries, in one more call. Code checks each takeaway, and each question with its correct answer, against that story's sources; drops a question if a wrong option uses only facts from the sources (it could be true); turns the options so the answer is not always first. Without the AI, the quiz is built in code from the paper's outlet counts.
 - **Not AI:** grouping, outlet counts, tags, For you, ranking.
 
 ## Security and privacy
@@ -112,7 +119,7 @@ Reader settings stay in the browser. The server receives city, topics and langua
 - Grouping quality depends on the embedding model (see testing.md).
 - Content licensing with publishers is not yet agreed (README, Known limitations).
 
-## Accounts, plans and gift email (added after approval)
+## Accounts, plans and gift email (added after the first MVP)
 
 ### Threat model
 
@@ -128,7 +135,7 @@ Reader settings stay in the browser. The server receives city, topics and langua
 
 - For each account: name, email, password hash, plan, and the gift log (recipient email, time, language, city).
 - For each gift: the recipient's email address, used to send that one email. Recipients do not get an account.
-- Reading settings still stay in the browser unless the account endpoint is used (FR-22).
+- Reading settings stay in the browser for readers without an account. With one, they are also saved to the account (name, city, topics, language, print size) so another device can restore them (FR-22). On log-in, saved settings replace the browser's; an account with nothing saved takes the browser's.
 
 ### Known limits
 

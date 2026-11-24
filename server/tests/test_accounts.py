@@ -44,6 +44,21 @@ def test_signup_sets_a_session_cookie_and_me_works(client):
     assert client.get("/api/auth/me").json()["user"]["name"] == "Test A"
 
 
+def test_settings_are_saved_to_the_account_and_restored(client):
+    profile = {"city": "karachi", "topics": ["economy", "jobs"], "lang": "ro", "large": True, "name": "Test <A>"}
+    assert client.post("/api/profile", json=profile, headers=H).status_code == 401  # needs an account
+    signup(client)
+    r = client.post("/api/profile", json=profile, headers=H)
+    assert r.status_code == 200, r.text
+    # another device: log in again with a fresh client and read the settings back
+    other = TestClient(app_module.app, base_url="https://testserver")
+    other.post("/api/auth/login", json={"email": "test.a@example.com", "password": "test-pass-1"}, headers=H)
+    saved = other.get("/api/auth/me").json()["user"]["profile"]
+    assert saved == {"city": "karachi", "topics": ["economy", "jobs"], "lang": "ro", "large": True, "name": "Test A"}
+    assert client.post("/api/profile", json=dict(profile, city="atlantis"), headers=H).status_code == 422
+    assert client.post("/api/profile", json=profile).status_code == 403  # header check
+
+
 def test_signup_rules(client):
     assert signup(client, email="not-an-email").status_code == 400
     assert signup(client, password="short").status_code == 400
@@ -141,6 +156,20 @@ def test_email_is_built_from_checked_text_with_links(client, collection):
     scores = [p["story"]["outlet_count"] + (2 if any(t["type"] == "city" for t in p["tags"]) else 0)
               + min(2, sum(t["type"] == "topic" for t in p["tags"])) for p in picks]
     assert scores == sorted(scores, reverse=True)
+
+
+def test_roman_urdu_gift_email(collection):
+    ed = build_edition({}, collection=collection, cache_path=None, pool=12)
+    st = ed["stories"][0]
+    st["summary"] = {"en": {"headline": "English head", "text": "English text."},
+                     "ur": {"headline": "اردو سرخی", "text": "اردو متن۔"},
+                     "ro": {"headline": "Roman sarkhi", "text": "Roman matn."}}
+    for other in ed["stories"][1:]:
+        other["coverage"].pop("ro", None)  # an edition made before Roman Urdu existed
+    subject, html, text = mailer.render_gift(ed, dict(GIFT, lang="ro", city=None, topics=[]))
+    assert "ki Subah" in subject and "Mohabbat ke saath" in subject
+    assert "Roman sarkhi" in html and "English head" not in html
+    assert "ne report kiya" in html
 
 
 def test_preview_needs_no_account(client):

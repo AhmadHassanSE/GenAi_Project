@@ -25,6 +25,7 @@
     <div class="seg" role="group" aria-label="Language" id="end-lang">
       <button type="button" data-lang="en" aria-pressed="true">English</button>
       <button type="button" data-lang="ur" aria-pressed="false" lang="ur">اردو</button>
+      <button type="button" data-lang="ro" aria-pressed="false" lang="ur-Latn" aria-label="Roman Urdu" title="Roman Urdu">Roman</button>
     </div>
     <a class="end-back" href="paper.html" data-t="back">Back to today’s paper</a>
   </header>
@@ -40,6 +41,18 @@
     <section class="remember" aria-labelledby="remember-title">
       <h2 id="remember-title" data-t="rememberTitle">Today’s top three, once more</h2>
       <ol class="remember__list" id="remember-list"></ol>
+    </section>
+
+    <section class="takeaways" aria-labelledby="take-title" id="takeaways" hidden>
+      <h2 id="take-title" data-t="takeTitle">Three things to remember</h2>
+      <ol class="takeaways__list" id="take-list"></ol>
+    </section>
+
+    <section class="quiz" aria-labelledby="quiz-title" id="quiz" hidden>
+      <h2 id="quiz-title" data-t="quizTitle">A quick quiz</h2>
+      <p class="quiz__lede" data-t="quizLede">Three questions from today’s paper. Every answer is in a story above.</p>
+      <ol class="quiz__list" id="quiz-list"></ol>
+      <p class="quiz__score" id="quiz-score" aria-live="polite"></p>
     </section>
 
     <section class="tomorrow" aria-labelledby="tomorrow-title">
@@ -82,7 +95,7 @@
 
   <footer class="site-footer site-footer--slim">
     <div class="container footer__base">
-      <span>A hackathon prototype. Every story credits and links the outlets that reported it.</span>
+      <span>A Generative AI course project. Every story credits and links the outlets that reported it.</span>
       <a href="sources.html">Our sources and ranking</a>
     </div>
   </footer>

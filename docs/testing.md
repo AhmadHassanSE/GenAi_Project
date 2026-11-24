@@ -24,8 +24,12 @@ or, with the virtual environment active, `python -m pytest server/tests -q`. The
 | Unit / integration added later: summary retry and the outlet's-own-words fallback (`test_summaries.py`) | 2 | 2 | 0 |
 | Unit / integration added later: accounts, plans, gift email (`test_accounts.py`) | 13 | 13 | 0 |
 | End-to-end / manual added later (browser): pricing, sign up, checkout, account page, gift preview, send without Gmail, phone width | 3 pages | 3 | 0 |
+| Unit / integration added later: Roman Urdu and topic balance (`test_summaries.py`, `test_api.py`, `test_foryou.py`) | 10 | 10 | 0 |
+| Unit / integration added later: Roman Urdu email, settings on the account, feed cap, evaluation sheets, request sizing, Roman Urdu that is English or fails the check (`test_accounts.py`, `test_feeds.py`, `test_evaluate.py`, `test_summaries.py`) | 9 | 9 | 0 |
+| Unit / integration added later: morning print and email, opt-in switch (`test_morning.py`) | 6 | 6 | 0 |
+| Unit / integration added later: takeaways and quiz (`test_closing.py`) | 7 | 7 | 0 |
 
-Total automated tests now: 66, all passing.
+Total automated tests now: 98, all passing.
 
 ## Edge cases covered
 
@@ -58,6 +62,17 @@ Total automated tests now: 66, all passing.
 | EC-25 | Gmail not configured | 503 with the reason, nothing sent | `test_gift_without_gmail_says_so`; browser check | Pass |
 | EC-26 | HTML in the sender's note | Escaped in the email | `test_email_is_built_from_checked_text_with_links` | Pass |
 | EC-27 | MongoDB rejects the login, or cannot be reached | `/api/health` names the problem; account calls answer 503 | Connection test and `/api/health`, by hand | Pass |
+| EC-28 | Roman Urdu adds a number or an in-sentence name not in the sources, or is half empty | Story falls back like any failed summary | `test_unsupported_claims_are_rejected` | Pass |
+| EC-29 | AI writes no Roman Urdu for a story | English text shown, labelled; other languages unaffected | `test_roman_urdu_reaches_the_edition_only_when_written` | Pass |
+| EC-30 | Six cricket stories outscore everything else | Only 3 make the paper; order still by score | `test_one_section_cannot_fill_the_paper` | Pass |
+| EC-31 | Too few other stories to fill the paper | Held-back stories return, still by score | `test_held_back_stories_fill_the_paper_when_there_is_nothing_else` | Pass |
+| EC-32 | Unknown language code | HTTP 422 | `test_roman_urdu_profile_is_accepted` | Pass |
+| EC-33 | Server restarts after the morning emails went out | No second email that day | `test_a_restart_does_not_send_twice` | Pass |
+| EC-34 | Server wakes at 09:15, or at 13:00 | Catches up and sends; after 11:00 skips the day | `test_late_start_catches_up_then_gives_up` | Pass |
+| EC-35 | Gmail not set up at 07:00 | Nothing sent; the reason is recorded | `test_without_gmail_nothing_is_sent_and_it_says_why` | Pass |
+| EC-36 | Feeds fail at 06:30 | Waits 10 minutes, then tries again | `test_a_failed_print_waits_before_trying_again` | Pass |
+| EC-37 | Quiz answer not in the sources, two options the same, answer index out of range, or a wrong option that the sources also support | Question dropped; a question built in code takes its place | `test_questions_are_rejected_when_wrong_or_ambiguous`, `test_ai_closing_page_mixes_checked_ai_questions_and_rules` | Pass |
+| EC-38 | Last-page AI call fails | Quiz built in code; no takeaways; note recorded | `test_closing_ai_failure_still_gives_a_quiz` | Pass |
 
 ## Measured metrics
 
@@ -67,10 +82,16 @@ Total automated tests now: 66, all passing.
 | Grouping margin | Threshold sweep on the fixed set (cross-language bonus 0.1) | 0 errors from 0.56 to 0.68; 4 split pairs at 0.72 |
 | Smaller model, for comparison | Same sweep with paraphrase-multilingual-MiniLM-L12-v2 | 0 errors only near 0.42, where real feeds chained unrelated stories (groups of 17); rejected |
 | Grouping on real feeds | 300 live reports, groups read by hand | Event-level groups (for example one factory blast: 3 English + 2 Urdu reports from 5 outlets). Weak spot: an ongoing story such as a war can gather several related developments into one group |
+| Grouping on the larger outlet list | 658 live reports from 24 answering feeds (2026-11-22), top 15 groups read by hand | Event-level groups across English and Urdu (for example one obituary: 9 outlets; the Portuguese foreign minister's visit: 10; Lahore's AQI: 7). Same weak spot: related developments join one group (two separate statements by one minister; a Mastung operation with a Peshawar one) |
 | Feeds answering | `python -m server.tools.check_feeds` on 2026-11-10 | 15 of 20 feeds; 3 returned HTTP 404 and 2 were unreadable, now paused and listed on the sources page |
+| Outlet list extended | Candidate feeds probed with Subah's own fetcher and parser on 2026-11-22 | 7 outlets added (Daily Times, The Nation with Nawa-i-Waqt, Daily Pakistan, Aaj News in English and Urdu, MM News, Pakistan Observer, Minute Mirror) and Daily Jang as The News's Urdu edition: 20 outlets, 25 feeds. Same-group papers count as one outlet. Rejected: Samaa (no connection), Dunya, Geo Urdu, DW Urdu, Daily Pakistan Urdu (unreadable), Hum, 24 News, Bol, AP (403 or 404) |
 | Generate-now time | `edition.stats.timings_ms`, 300 reports | 63 s on a cold start (model loading and embedding), 2.2 s warm; the server warms up at start and holds requests until it is ready. Paper page end to end with the live replay: 16 s warm |
+| Generate-now time, larger outlet list | Same, 658 reports, model already loaded, no embeddings cached | 110 s, of which 107 s embedding the reports on a laptop CPU; once per server process (the server warms up at start, and a regenerated paper embeds only reports it has not seen) |
 | AI calls per paper | `edition.ai.calls` with batches of 5 | 2 for 10 stories, 0 when cached |
 | Model choice | Same 10 real stories, grounding check pass rate | openai/gpt-oss-120b: 7 of 10, then 9 of 10 after a prompt fix on name spelling, about 8 s; qwen/qwen3.8-27b: could not run a full paper, its free-tier limit is 8,000 tokens a minute |
+| Real AI run on the larger outlet list (2026-11-22) | One paper from the live snapshot, `openai/gpt-oss-120b` on Groq's free tier | First try: every call refused (HTTP 413). The free tier allows 8,000 tokens per request, counting the reserved output, and 20-outlet stories are larger. Fixed by sending at most 6 sources per story (one per outlet first, descriptions cut to 240 characters), sizing batches from a token estimate and reserving output per story. Then: 7 of 10 stories summarised in 3 calls; 2 left out by the model, 1 failed the source check |
+| Roman Urdu with the real model | Same run, read by hand | First prompt: the model copied English into the Roman Urdu fields, and the source check passed it. Now English is detected in code and only the Roman Urdu is dropped. With the example in the prompt, 4 of 7 summaries had real Roman Urdu (for example "Lahore dobara aalmi aloodgi ki fehrist mein sar farisht, AQI 500 se zyada"); one headline was half English. Quality to be rated by a native speaker on `eval/audit.csv` |
+| Takeaways and quiz with the real model | Same day, read by hand | First try failed: the request with every source was refused; now only the checked summaries are sent. Then 2 of 3 takeaways and 3 of 3 questions passed the checks (for example "At what age did Hussain Naqi pass away?" 88 / 78 / 68). The model always put the answer first, so the code now turns the options. Its Roman Urdu was all dropped by the checks, so that page showed English |
 | Grounding check on real AI output | Rejections read by hand | All rejections were real: names written in a spelling no source used ("Turkish" for "Turkiye"; English spellings of names found only in Urdu sources) |
 
 ## Defect log
@@ -86,11 +107,12 @@ Total automated tests now: 66, all passing.
 | D-07 | Stories whose summary failed the check showed only "No summary today" | Reading the paper | Medium | Fixed: retry, then the outlet's own words | e071f5a |
 | D-08 | The first MongoDB login supplied was rejected by Atlas (`bad auth`) | Connection test | High | Fixed by using a working database user | configuration |
 | D-09 | With the account chip, the nav overflowed at 375 px and hid the menu button | Browser check at phone width | Medium | Fixed | 27cfa98 |
-| D-10 | The Basic plan promised settings saved to the account before that was wired into the pages | Review | Low | Open (FR-22) | |
+| D-10 | The Basic plan promised settings saved to the account before that was wired into the pages | Review | Low | Fixed (FR-22) | b376e82 |
 
 ## Known untested areas
 
-- Urdu wording of AI summaries: needs a review by an Urdu speaker.
+- Urdu and Roman Urdu wording of AI summaries: needs a review by an Urdu speaker (the proposal's 1-to-5 native-speaker rating has not been run yet).
+- Roman Urdu with the real model: one live paper so far (see Measured metrics); quality not yet rated by a native speaker.
 - Grouping on several real days: tuned on one day of feeds plus the fixed set.
 - Screen readers: keyboard and focus were checked by hand; no screen-reader pass yet.
 - Gift email through real Gmail: tested with a fake sender; a real send needs the Gmail app password on the server.

@@ -40,13 +40,14 @@
 
     <section class="src-block" aria-labelledby="rank-title">
       <h2 id="rank-title">The ranking formula</h2>
-      <p class="src-formula" id="formula">Score = outlets reporting the story, plus 2 if it names your city, plus 1 per matching topic (at most 2). Ties go to the newest report.</p>
+      <p class="src-formula" id="formula">Score = outlets reporting the story, plus 2 if it names your city, plus 1 per matching topic (at most 2). Ties go to the newest report. No section fills more than 3 of 10 places.</p>
       <ol class="src-steps">
         <li><b>Collect.</b> We read each feed’s headline, description, link and time. We never fetch or copy the article itself.</li>
         <li><b>Group.</b> Reports about the same event are grouped by meaning, across English and Urdu, using a model that runs on our server. Reports more than 36 hours apart never group.</li>
         <li><b>Count.</b> The label is the number of distinct outlets in the group. An outlet’s English and Urdu editions count once.</li>
         <li><b>Rank.</b> The formula above, and nothing else. The top ten make the paper.</li>
-        <li><b>Summarise.</b> Only those ten are sent to the AI, with the headlines and descriptions of their own reports.</li>
+        <li><b>Balance.</b> A story’s section is its first topic (Prices, Cricket, Politics…). No section takes more than 3 of the 10 places, so one big day for one topic cannot fill the paper. A story held back by this rule comes back only if there are not enough other stories.</li>
+        <li><b>Summarise.</b> Only those ten are sent to the AI, with the headlines and descriptions of their own reports. It writes each summary in English, Urdu and Roman Urdu; code then checks every number and name against those reports.</li>
       </ol>
     </section>
 
@@ -99,7 +100,7 @@
 
   <footer class="site-footer site-footer--slim">
     <div class="container footer__base">
-      <span>A hackathon prototype.</span>
+      <span>A Generative AI course project.</span>
       <a href="index.html">Front page</a>
     </div>
   </footer>
